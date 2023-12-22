@@ -1,5 +1,5 @@
 # ollamarama
-Terminal based AI chatbot with infinite personalities, using local LLMs
+Terminal based AI chatbot with infinite personalities, using local LLMs with Ollama and LiteLLM.  
 
 This is basically just Ollama with model switching and personality switching.  I like to call it the poor man's mixture of experts.
 
