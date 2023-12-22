@@ -40,7 +40,8 @@ class ollamarama:
             'stablelm-zephyr': 'ollama/stablelm-zephyr',
             'neural-chat': 'ollama/neural-chat',
             'mistral-openorca': 'ollama/mistral-openorca',
-             
+            'deepseek-llm': 'ollama/deepseek-llm:7b-chat',
+            'wizard-vicuna-uncensored': 'ollama/wizard-vicuna-uncensored'
         }
         #set model
         self.default_model = self.models['solar']
@@ -163,7 +164,7 @@ Available models: {', '.join(sorted(list(self.models)))}
                 model = console.input("Enter model name: ")
                 if model in self.models:
                     self.model = self.models[model]
-                    console.print(f"Model set to {self.model.removeprefix('ollama/')}", style='green', highlight=False)
+                    console.print(f"Model set to {self.model.removeprefix('ollama/')}\n", style='green', highlight=False)
             
             elif prompt == "reset model":
                 self.model = self.default_model
