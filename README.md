@@ -29,7 +29,7 @@ python3 ollamarama.py
 
 **reset**  resets to default personality
 
-**stock** or **default**  sets bot to stock gpt settings
+**stock** or **default**  sets bot to stock model settings
 
 **persona**  activates personality changer
 
