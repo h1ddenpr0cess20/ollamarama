@@ -149,11 +149,11 @@ class ollamarama:
                 logging.info("Bot was reset")
                 reset()
                 
-            # stock gpt    
+            # stock model settings    
             elif prompt == "default" or prompt == "stock":
                 self.messages.clear()
-                logging.info("Stock GPT settings applied")
-                console.print("Stock GPT settings applied\n", style="green")
+                logging.info("Stock model settings applied")
+                console.print("Stock model settings applied\n", style="green")
             
             elif prompt == "list models":
                 console.print(f'''
