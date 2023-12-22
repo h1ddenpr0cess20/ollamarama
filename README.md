@@ -35,8 +35,8 @@ python3 ollamarama.py
 
 **custom**  use a custom system prompt
 
-**list models** list available models
+**change model** list models and change the current model
 
-**change model** change the current model
+**reset model** reset to default model
 
 **quit** or **exit** exits the program

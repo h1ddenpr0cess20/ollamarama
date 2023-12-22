@@ -123,8 +123,8 @@ class ollamarama:
 [b]stock[/] or [b]default[/] sets bot to stock gpt settings.
 [b]persona[/] activates personality changer, enter a new personality when prompted.
 [b]custom[/] set a custom prompt
-[b]list models[/] list available models
-[b]change model[/] change current model
+[b]change model[/] list models and change current model
+[b]reset model[/] reset to default model
 [b]quit[/] or [b]exit[/] exits the program
 ''', style="green")
                 
@@ -155,16 +155,15 @@ class ollamarama:
                 logging.info("Stock model settings applied")
                 console.print("Stock model settings applied\n", style="green")
             
-            elif prompt == "list models":
+            elif prompt == "change model":
                 console.print(f'''
 Current model: {self.model.removeprefix('ollama/')}
 Available models: {', '.join(sorted(list(self.models)))}
 ''', style='green')
-                
-            elif prompt == "change model":
                 model = console.input("Enter model name: ")
                 if model in self.models:
                     self.model = self.models[model]
+                    console.print(f"Model set to {self.model.removeprefix('ollama/')}", style='green', highlight=False)
             
             elif prompt == "reset model":
                 self.model = self.default_model
