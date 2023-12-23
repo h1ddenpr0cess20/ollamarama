@@ -25,24 +25,26 @@ pip3 install rich litellm
 python3 ollamarama.py
 ```
 
-**help** shows the help menu
+**help**  shows the help menu
 
 **reset**  resets to default personality
 
-**stock** or **default**  sets bot to stock model settings
+**clear**  resets and clears the screen
+
+**stock**  or **default**  sets bot to stock model settings
 
 **persona**  activates personality changer
 
 **custom**  use a custom system prompt
 
-**change model** list models and change the current model
+**change model**  list models and change the current model
 
-**reset model** reset to default model
+**reset model**  reset to default model
 
-**change temperature** changes temperature
+**change temperature**  changes temperature
 
-**change top_p** changes top_p
+**change top_p**  changes top_p
 
-**change repeat_penalty** changes repeat_penalty
+**change repeat_penalty**  changes repeat_penalty
 
-**quit** or **exit** exits the program
+**quit** or **exit**  exits the program

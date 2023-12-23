@@ -97,8 +97,10 @@ class ollamarama:
        
         def reset():
             logging.info("Bot reset")
-            os.system('clear') #clear screen
             self.model = self.default_model
+            self.temperature = .9
+            self.top_p = .7
+            self.repeat_penalty = 1.5
             # set personality and introduce self
             self.persona(self.personality)
             self.messages.append({"role": "user", "content": "introduce yourself [your response must be one paragraph or less]"})
@@ -125,6 +127,7 @@ class ollamarama:
             elif prompt == "help":
                 console.print('''
 [b]reset[/] resets to default personality.
+[b]clear[/] resets and clears the screen
 [b]stock[/] or [b]default[/] sets bot to stock model settings.
 [b]persona[/] activates personality changer, enter a new personality when prompted.
 [b]custom[/] set a custom system prompt
@@ -156,6 +159,11 @@ class ollamarama:
             elif prompt == "reset":
                 logging.info("Bot was reset")
                 reset()
+            
+            elif prompt == "clear":
+                os.system('clear')
+                logging.info("Bot was reset")
+                reset()
                 
             # stock model settings    
             elif prompt == "default" or prompt == "stock":
@@ -172,9 +180,11 @@ Available models: {', '.join(sorted(list(self.models)))}
                 if model in self.models:
                     self.model = self.models[model]
                     console.print(f"Model set to {self.model.removeprefix('ollama/')}\n", style='green', highlight=False)
+                    logging.info(f"Model changed to {self.model.removeprefix('ollama/')}")
             
             elif prompt == "reset model":
                 self.model = self.default_model
+                logging.info(f"Model changed to {self.model.removeprefix('ollama/')}")
 
             elif prompt == "change temperature":
                 try:
@@ -182,6 +192,7 @@ Available models: {', '.join(sorted(list(self.models)))}
                     if 0 <= temp <=1:
                         self.temperature = temp
                         console.print(f"Temperature set to {self.temperature}\n", style='green')
+                        logging.info(f"Temperature changed to {self.temperature}")
                     else:
                         console.print(f"Invalid input, temperature is still {self.temperature}\n", style='green')
                 except ValueError:
@@ -193,6 +204,7 @@ Available models: {', '.join(sorted(list(self.models)))}
                     if 0 <= top_p <=1:
                         self.top_p = top_p
                         console.print(f"top_p set to {self.top_p}\n", style='green')
+                        logging.info(f"Top_p changed to {self.top_p}")
                     else:
                         console.print(f"Invalid input, top_p is still {self.top_p}\n", style='green')
                 except ValueError:
@@ -204,6 +216,7 @@ Available models: {', '.join(sorted(list(self.models)))}
                     if 0 <= repeat_penalty <=2:
                         self.repeat_penalty = repeat_penalty
                         console.print(f"repeat_penalty set to {self.repeat_penalty}\n", style='green')
+                        logging.info(f"Repeat_penalty changed to {self.repeat_penalty}")
                     else:
                         console.print(f"Invalid input, repeat_penalty is still {self.repeat_penalty}\n", style='green')
                 except ValueError:
@@ -227,7 +240,7 @@ Available models: {', '.join(sorted(list(self.models)))}
                 continue
 
 if __name__ == "__main__":
-       
+    os.system('clear')
     #set the default personality
     personality = "a helpful and thorough AI assistant who provides accurate and detailed answers without being too verbose"
     #start bot
