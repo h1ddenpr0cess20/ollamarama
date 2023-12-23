@@ -47,6 +47,10 @@ class ollamarama:
         self.default_model = self.models['dolphin-mistral']
         self.model = self.default_model
 
+        self.temperature = .9
+        self.top_p = .7
+        self.repeat_penalty = 1.5
+
     # Sets personality
     def persona(self, persona):
         self.messages.clear()
@@ -67,9 +71,9 @@ class ollamarama:
             response = completion(
                 api_base="http://localhost:11434",
                 model=self.model,
-                temperature=.9,
-                top_p=.7,
-                repeat_penalty=1.5,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                repeat_penalty=self.repeat_penalty,
                 messages=message,
                 timeout=60
                 )
@@ -121,11 +125,14 @@ class ollamarama:
             elif prompt == "help":
                 console.print('''
 [b]reset[/] resets to default personality.
-[b]stock[/] or [b]default[/] sets bot to stock gpt settings.
+[b]stock[/] or [b]default[/] sets bot to stock model settings.
 [b]persona[/] activates personality changer, enter a new personality when prompted.
-[b]custom[/] set a custom prompt
+[b]custom[/] set a custom system prompt
 [b]change model[/] list models and change current model
 [b]reset model[/] reset to default model
+[b]change temperature[/] changes temperature
+[b]change top_p[/] changes top_p
+[b]change repeat_penalty[/] changes repeat_penalty
 [b]quit[/] or [b]exit[/] exits the program
 ''', style="green")
                 
@@ -168,6 +175,39 @@ Available models: {', '.join(sorted(list(self.models)))}
             
             elif prompt == "reset model":
                 self.model = self.default_model
+
+            elif prompt == "change temperature":
+                try:
+                    temp = float(console.input(f"Input temperature between 0 and 1 (currently {self.temperature}): "))
+                    if 0 <= temp <=1:
+                        self.temperature = temp
+                        console.print(f"Temperature set to {self.temperature}\n", style='green')
+                    else:
+                        console.print(f"Invalid input, temperature is still {self.temperature}\n", style='green')
+                except ValueError:
+                        console.print(f"Invalid input, temperature is still {self.temperature}\n", style='green')
+
+            elif prompt == "change top_p":
+                try:
+                    top_p = float(console.input(f"Input top_p between 0 and 1 (currently {self.top_p}): "))
+                    if 0 <= top_p <=1:
+                        self.top_p = top_p
+                        console.print(f"top_p set to {self.top_p}\n", style='green')
+                    else:
+                        console.print(f"Invalid input, top_p is still {self.top_p}\n", style='green')
+                except ValueError:
+                        console.print(f"Invalid input, top_p is still {self.top_p}\n", style='green')
+
+            elif prompt == "change repeat_penalty":
+                try:
+                    repeat_penalty = float(console.input(f"Input top_p between 0 and 2 (currently {self.repeat_penalty}): "))
+                    if 0 <= repeat_penalty <=2:
+                        self.repeat_penalty = repeat_penalty
+                        console.print(f"repeat_penalty set to {self.repeat_penalty}\n", style='green')
+                    else:
+                        console.print(f"Invalid input, repeat_penalty is still {self.repeat_penalty}\n", style='green')
+                except ValueError:
+                        console.print(f"Invalid input, repeat_penalty is still {self.repeat_penalty}\n", style='green')
 
 
             # normal response
