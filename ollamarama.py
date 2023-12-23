@@ -154,13 +154,13 @@ class ollamarama:
             elif prompt == "default" or prompt == "stock":
                 self.messages.clear()
                 logging.info("Stock model settings applied")
-                console.print("Stock model settings applied\n", style="green")
+                console.print("Stock model settings applied\n", style="green", highlight=False)
             
             elif prompt == "change model":
                 console.print(f'''
 Current model: {self.model.removeprefix('ollama/')}
 Available models: {', '.join(sorted(list(self.models)))}
-''', style='green')
+''', style='green', highlight=False)
                 model = console.input("Enter model name: ")
                 if model in self.models:
                     self.model = self.models[model]
