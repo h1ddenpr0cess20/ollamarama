@@ -44,7 +44,7 @@ class ollamarama:
             'wizard-vicuna-uncensored': 'ollama/wizard-vicuna-uncensored'
         }
         #set model
-        self.default_model = self.models['solar']
+        self.default_model = self.models['dolphin-mistral']
         self.model = self.default_model
 
     # Sets personality
