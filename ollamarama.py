@@ -125,9 +125,9 @@ class ollamarama:
             elif prompt == "help":
                 console.print('''
 [b]reset[/] resets to default personality.
-[b]stock[/] or [b]default[/] sets bot to stock gpt settings.
+[b]stock[/] or [b]default[/] sets bot to stock model settings.
 [b]persona[/] activates personality changer, enter a new personality when prompted.
-[b]custom[/] set a custom prompt
+[b]custom[/] set a custom system prompt
 [b]change model[/] list models and change current model
 [b]reset model[/] reset to default model
 [b]change temperature[/] changes temperature
