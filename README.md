@@ -3,6 +3,8 @@ Terminal based AI chatbot with infinite personalities, using local LLMs with Oll
 
 This is basically just Ollama with model switching and personality switching.  I like to call it the poor man's mixture of experts.
 
+Also available for [IRC](https://github.com/h1ddenpr0cess20/ollamarama-irc) and [Matrix](https://github.com/h1ddenpr0cess20/ollamarama-matrix) chat protocols.
+
 ## Setup
 
 Install and familiarize yourself with [Ollama](https://ollama.ai/), make sure you can run offline LLMs, etc.
