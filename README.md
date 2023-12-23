@@ -39,4 +39,10 @@ python3 ollamarama.py
 
 **reset model** reset to default model
 
+**change temperature** changes temperature
+
+**change top_p** changes top_p
+
+**change repeat_penalty** changes repeat_penalty
+
 **quit** or **exit** exits the program
