@@ -103,13 +103,7 @@ class ollamarama:
             self.repeat_penalty = 1.5
             # set personality and introduce self
             self.persona(self.personality)
-            self.messages.append({"role": "user", "content": "introduce yourself [your response must be one paragraph or less]"})
-            try:
-                response_text = self.respond(self.messages)
-                console.print(response_text + "  Type help for more information.\n", style='gold3')
-            # fallback if generated introduction failed
-            except:
-                console.print("Hello, I am an AI that can assume any personality.  Type help for more information.\n", style='gold3')
+            console.print("Hello, I am an AI that can assume any personality.  Type help for more information.\n", style='gold3')
 
         reset()
         
