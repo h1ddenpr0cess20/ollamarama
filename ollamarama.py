@@ -2,7 +2,6 @@
 # Dustin Whyte
 # December 2023
 
-
 import os
 import logging
 from rich.console import Console
@@ -21,6 +20,7 @@ class ollamarama:
         self.persona(self.personality)
 
         #put the models you want to use here, still testing various models
+               
         self.models = {
             'zephyr': 'ollama/zephyr:7b-beta-q8_0',
             'solar': 'ollama/solar',
@@ -41,12 +41,15 @@ class ollamarama:
             'neural-chat': 'ollama/neural-chat',
             'mistral-openorca': 'ollama/mistral-openorca',
             'deepseek-llm': 'ollama/deepseek-llm:7b-chat',
-            'wizard-vicuna-uncensored': 'ollama/wizard-vicuna-uncensored'
+            'wizard-vicuna-uncensored': 'ollama/wizard-vicuna-uncensored',
+            'llama-pro': 'ollama/llama-pro',
+            'gemma': 'ollama/gemma'
         }
         #set model
-        self.default_model = self.models['dolphin-mistral']
+        self.default_model = self.models['mistral']
         self.model = self.default_model
 
+        #i have no idea if these are optimal lol, change these to your liking
         self.temperature = .9
         self.top_p = .7
         self.repeat_penalty = 1.5
@@ -103,7 +106,15 @@ class ollamarama:
             self.repeat_penalty = 1.5
             # set personality and introduce self
             self.persona(self.personality)
-            console.print("Hello, I am an AI that can assume any personality.  Type help for more information.\n", style='gold3')
+            self.messages.append({"role": "user", "content": "introduce yourself [your response must be one paragraph or less]"})
+            try:
+                console.print("Please wait while the model loads...", style='bold')
+                response_text = self.respond(self.messages)
+                os.system("clear")
+                console.print(response_text + "  Type help for more information.\n", style='gold3', highlight=False)
+            # fallback if generated introduction failed
+            except:
+                console.print("Hello, I am an AI that can assume any personality.  Type help for more information.\n", style='gold3')
 
         reset()
         
