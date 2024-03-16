@@ -6,6 +6,7 @@ import os
 import logging
 from rich.console import Console
 from litellm import completion
+import json
 
 logging.basicConfig(filename='ollamarama.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -21,30 +22,11 @@ class ollamarama:
 
         #put the models you want to use here, still testing various models
                
-        self.models = {
-            'zephyr': 'ollama/zephyr:7b-beta-q8_0',
-            'solar': 'ollama/solar',
-            'mistral': 'ollama/mistral',
-            'llama2': 'ollama/llama2',
-            'llama2-uncensored': 'ollama/llama2-uncensored',
-            'openchat': 'ollama/openchat',
-            'codellama': 'ollama/codellama:13b-instruct-q4_0',
-            'dolphin-mistral': 'ollama/dolphin2.2-mistral:7b-q8_0',
-            'deepseek-coder': 'ollama/deepseek-coder:6.7b',
-            'orca2': 'ollama/orca2',
-            'starling-lm': 'ollama/starling-lm',
-            'vicuna': 'ollama/vicuna:13b-q4_0',
-            'phi': 'ollama/phi',
-            'orca-mini': 'ollama/orca-mini',
-            'wizardcoder': 'ollama/wizardcoder:python',
-            'stablelm-zephyr': 'ollama/stablelm-zephyr',
-            'neural-chat': 'ollama/neural-chat',
-            'mistral-openorca': 'ollama/mistral-openorca',
-            'deepseek-llm': 'ollama/deepseek-llm:7b-chat',
-            'wizard-vicuna-uncensored': 'ollama/wizard-vicuna-uncensored',
-            'llama-pro': 'ollama/llama-pro',
-            'gemma': 'ollama/gemma'
-        }
+        #load models.json
+        with open("models.json", "r") as f:
+            self.models = json.load(f)
+            f.close()
+
         #set model
         self.default_model = self.models['mistral']
         self.model = self.default_model
