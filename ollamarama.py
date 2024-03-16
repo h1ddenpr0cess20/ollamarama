@@ -19,8 +19,6 @@ class ollamarama:
         # set default personality
         self.personality = personality
         self.persona(self.personality)
-
-        #put the models you want to use here, still testing various models
                
         #load models.json
         with open("models.json", "r") as f:
@@ -78,7 +76,6 @@ class ollamarama:
         console = Console()
         console.width=80
         console.wrap_text = True
-        soft_wrap=True
        
         def reset():
             logging.info("Bot reset")
@@ -90,7 +87,7 @@ class ollamarama:
             self.persona(self.personality)
             self.messages.append({"role": "user", "content": "introduce yourself [your response must be one paragraph or less]"})
             try:
-                console.print("Please wait while the model loads...", style='bold')
+                console.print("Please wait while the model loads...", style='bold', highlight=False)
                 response_text = self.respond(self.messages)
                 os.system("clear")
                 console.print(response_text + "  Type help for more information.\n", style='gold3', highlight=False)
