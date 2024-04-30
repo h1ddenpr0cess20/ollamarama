@@ -19,14 +19,14 @@ class ollamarama:
         # set default personality
         self.personality = personality
         self.persona(self.personality)
-               
+
         #load models.json
         with open("models.json", "r") as f:
             self.models = json.load(f)
             f.close()
 
         #set model
-        self.default_model = self.models['mistral']
+        self.default_model = self.models['llama3']
         self.model = self.default_model
 
         #i have no idea if these are optimal lol, change these to your liking
@@ -76,7 +76,7 @@ class ollamarama:
         console = Console()
         console.width=80
         console.wrap_text = True
-       
+
         def reset():
             logging.info("Bot reset")
             self.model = self.default_model
@@ -170,42 +170,24 @@ Available models: {', '.join(sorted(list(self.models)))}
                 self.model = self.default_model
                 logging.info(f"Model changed to {self.model.removeprefix('ollama/')}")
 
-            elif prompt == "change temperature":
-                try:
-                    temp = float(console.input(f"Input temperature between 0 and 1 (currently {self.temperature}): "))
-                    if 0 <= temp <=1:
-                        self.temperature = temp
-                        console.print(f"Temperature set to {self.temperature}\n", style='green')
-                        logging.info(f"Temperature changed to {self.temperature}")
-                    else:
-                        console.print(f"Invalid input, temperature is still {self.temperature}\n", style='green')
-                except ValueError:
-                        console.print(f"Invalid input, temperature is still {self.temperature}\n", style='green')
+            elif prompt in ["change temperature", "change top_p", "change repeat_penalty"]:
+                attr_name = prompt.split()[-1]
+                min_val, max_val = {
+                    "temperature": (0, 1),
+                    "top_p": (0, 1),
+                    "repeat_penalty": (0, 2)
+                }[attr_name]
 
-            elif prompt == "change top_p":
                 try:
-                    top_p = float(console.input(f"Input top_p between 0 and 1 (currently {self.top_p}): "))
-                    if 0 <= top_p <=1:
-                        self.top_p = top_p
-                        console.print(f"top_p set to {self.top_p}\n", style='green')
-                        logging.info(f"Top_p changed to {self.top_p}")
+                    value = float(console.input(f"Input {attr_name} between {min_val} and {max_val} (currently {getattr(self, attr_name)}): "))
+                    if min_val <= value <= max_val:
+                        setattr(self, attr_name, value)
+                        console.print(f"{attr_name} set to {value}\n", style='green')
+                        logging.info(f"{attr_name.capitalize()} changed to {value}")
                     else:
-                        console.print(f"Invalid input, top_p is still {self.top_p}\n", style='green')
+                        console.print(f"Invalid input, {attr_name} is still {getattr(self, attr_name)}\n", style='green')
                 except ValueError:
-                        console.print(f"Invalid input, top_p is still {self.top_p}\n", style='green')
-
-            elif prompt == "change repeat_penalty":
-                try:
-                    repeat_penalty = float(console.input(f"Input top_p between 0 and 2 (currently {self.repeat_penalty}): "))
-                    if 0 <= repeat_penalty <=2:
-                        self.repeat_penalty = repeat_penalty
-                        console.print(f"repeat_penalty set to {self.repeat_penalty}\n", style='green')
-                        logging.info(f"Repeat_penalty changed to {self.repeat_penalty}")
-                    else:
-                        console.print(f"Invalid input, repeat_penalty is still {self.repeat_penalty}\n", style='green')
-                except ValueError:
-                        console.print(f"Invalid input, repeat_penalty is still {self.repeat_penalty}\n", style='green')
-
+                    console.print(f"Invalid input, {attr_name} is still {getattr(self, attr_name)}\n", style='green')
 
             # normal response
             elif prompt != None:
@@ -214,10 +196,10 @@ Available models: {', '.join(sorted(list(self.models)))}
                 response = self.respond(self.messages)
                 #special colorization for code blocks or quotations
                 if "```" in response or response.startswith('"'):
-                    console.print(response + "\n", style="gold3", justify="full") #print response
+                    console.print(response + "\n", style="gold3", justify="full") 
                 #no special colorization for responses without those
                 else:
-                    console.print(response + "\n", style="gold3", justify="full", highlight=False) #print response
+                    console.print(response + "\n", style="gold3", justify="full", highlight=False)
             
             # no message
             else:
