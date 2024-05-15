@@ -208,7 +208,7 @@ Available models: {', '.join(sorted(list(self.models)))}
 if __name__ == "__main__":
     os.system('clear')
     #set the default personality
-    personality = "a minimalist AI assistant"
+    personality = "a minimalist AI assistant (do not give yourself a name)"
     #start bot
     bot = ollamarama(personality)
     bot.start()
