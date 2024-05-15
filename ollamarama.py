@@ -37,9 +37,9 @@ class ollamarama:
     # Sets personality
     def persona(self, persona):
         self.messages.clear()
-        personality = "you are " + persona + ". speak in the first person and never break character."
+        personality = "you are " + persona + ". speak in the first person and never break character.  keep your responses brief and to the point. "
         self.messages.append({"role": "system", "content": personality})
-        self.messages.append({"role": "user", "content": "introduce yourself [your response must be one paragraph or less]"})
+        self.messages.append({"role": "user", "content": "introduce yourself"})
     
     # use a custom prompt such as one you might find at awesome-chatgpt-prompts
     def custom(self, prompt):
@@ -85,7 +85,7 @@ class ollamarama:
             self.repeat_penalty = 1.5
             # set personality and introduce self
             self.persona(self.personality)
-            self.messages.append({"role": "user", "content": "introduce yourself [your response must be one paragraph or less]"})
+            self.messages.append({"role": "user", "content": "introduce yourself"})
             try:
                 console.print("Please wait while the model loads...", style='bold', highlight=False)
                 response_text = self.respond(self.messages)
@@ -191,7 +191,7 @@ Available models: {', '.join(sorted(list(self.models)))}
 
             # normal response
             elif prompt != None:
-                self.messages.append({"role": "user", "content": prompt + " [your response must be one paragraph or less]"})
+                self.messages.append({"role": "user", "content": prompt})
                 logging.info(f"User: {prompt}")
                 response = self.respond(self.messages)
                 #special colorization for code blocks or quotations
@@ -208,7 +208,7 @@ Available models: {', '.join(sorted(list(self.models)))}
 if __name__ == "__main__":
     os.system('clear')
     #set the default personality
-    personality = "a helpful and thorough AI assistant who provides accurate and detailed answers without being too verbose"
+    personality = "a minimalist AI assistant"
     #start bot
     bot = ollamarama(personality)
     bot.start()
