@@ -4,85 +4,100 @@
 
 import os
 import logging
-from rich.console import Console
-from litellm import completion
+import requests
 import json
-
-logging.basicConfig(filename='ollamarama.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+from rich.console import Console
+from rich.markdown import Markdown
+from prompt_toolkit import prompt, PromptSession
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+#from prompt_toolkit.completion import WordCompleter
 
 class ollamarama:
-    def __init__(self, personality):
+    def __init__(self):
 
         # holds history
         self.messages = []
 
-        # set default personality
-        self.personality = personality
-        self.persona(self.personality)
-
         #load models.json
-        with open("models.json", "r") as f:
-            self.models = json.load(f)
+        with open("config.json", "r") as f:
+            self.config = json.load(f)
             f.close()
 
         #set model
-        self.default_model = self.models['llama3']
-        self.model = self.default_model
+        self.models = self.config['models']
+        self.default_model = self.config['default_model']
+        self.model = self.models[self.default_model]
 
-        #i have no idea if these are optimal lol, change these to your liking
-        self.temperature = .9
-        self.top_p = .7
-        self.repeat_penalty = 1.5
+        self.api_url = self.config['api_base'] + "/api/chat"
+        self.temperature, self.top_p, self.repeat_penalty = self.config['options'].values()
+        self.defaults = {
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "repeat_penalty": self.repeat_penalty
+        }
+
+        self.default_personality = self.config["personality"]
+        self.personality = self.default_personality
+        self.prompt = self.config["prompt"]
+        self.persona(self.personality)
 
     # Sets personality
     def persona(self, persona):
         self.messages.clear()
-        personality = "you are " + persona + ". speak in the first person and never break character.  keep your responses brief and to the point. "
+        personality = self.prompt[0] + persona + self.prompt[1]
         self.messages.append({"role": "system", "content": personality})
         self.messages.append({"role": "user", "content": "introduce yourself"})
     
-    # use a custom prompt such as one you might find at awesome-chatgpt-prompts
-    def custom(self, prompt):
+    def custom(self, system):
         self.messages.clear()
-        self.messages.append({"role": "system", "content": prompt})
+        self.messages.append({"role": "system", "content": system})
 
     # respond to messages
     def respond(self, message):
-        
         try:
-            #Generate response 
-            response = completion(
-                api_base="http://localhost:11434",
-                model=self.model,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                repeat_penalty=self.repeat_penalty,
-                messages=message,
-                timeout=60
-                )
+            data = {
+                "model": self.model, 
+                "messages": message, 
+                "stream": False,
+                "options": {
+                    "top_p": self.top_p,
+                    "temperature": self.temperature,
+                    "repeat_penalty": self.repeat_penalty
+                    }
+                }
         except:
             return "Something went wrong, try again"
         else:
-            #Extract response text and add it to history
-            response_text = response.choices[0].message.content
+            response = requests.post(self.api_url, json=data, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            response_text = data["message"]["content"].strip('"').strip()
             self.messages.append({"role": "assistant", "content": response_text})
             logging.info(f"Bot: {response_text}")
             if len(self.messages) > 30:
-                del self.messages[1:3]
-            return response_text.strip()
+                if self.messages[0]['role'] == "system":
+                    del self.messages[1:3]
+                else:
+                    del self.messages[0:2]
+            return response_text
         
     def start(self):
-        # text wrap and color
         console = Console()
         console.width=80
-        console.wrap_text = True
+        
+        history = InMemoryHistory()
+        session = PromptSession(
+            history=history,
+            auto_suggest=AutoSuggestFromHistory(),
+            #completer is kinda distracting, disabled for now
+            #completer=WordCompleter(["help", "exit", "quit", "reset", "clear", "stock", "persona", "custom", "change model", "change temperature", "change top_p", "change repeat_penalty", "reset model"])
+    )
 
         def reset():
             logging.info("Bot reset")
-            self.model = self.default_model
-            self.temperature = .9
-            self.top_p = .7
-            self.repeat_penalty = 1.5
+            self.model = self.models[self.default_model]
+            self.temperature, self.top_p, self.repeat_penalty = self.defaults.values()
             # set personality and introduce self
             self.persona(self.personality)
             self.messages.append({"role": "user", "content": "introduce yourself"})
@@ -90,88 +105,74 @@ class ollamarama:
                 console.print("Please wait while the model loads...", style='bold', highlight=False)
                 response_text = self.respond(self.messages)
                 os.system("clear")
-                console.print(response_text + "  Type help for more information.\n", style='gold3', highlight=False)
+                console.print(Markdown(response_text + "  Type help for more information."), style='gold3', highlight=False)
             # fallback if generated introduction failed
             except:
-                console.print("Hello, I am an AI that can assume any personality.  Type help for more information.\n", style='gold3')
+                console.print("Hello, I am an AI that can assume any personality.  Type help for more information.", style='gold3', highlight=False)
 
         reset()
         
-        prompt = "" #empty string for prompt input
+        message = ""
         
-        while prompt != "quit":
+        while message != "quit":
             # get the message
-            prompt = console.input("[bold grey66]Prompt: [/]")
+            message = session.prompt("> ")
 
             # exit program
-            if prompt == "quit" or prompt == "exit":
+            if message == "quit" or message == "exit":
                 exit()
             
             # help menu
-            elif prompt == "help":
-                console.print('''
-[b]reset[/] resets to default personality.
-[b]clear[/] resets and clears the screen
-[b]stock[/] or [b]default[/] sets bot to stock model settings.
-[b]persona[/] activates personality changer, enter a new personality when prompted.
-[b]custom[/] set a custom system prompt
-[b]change model[/] list models and change current model
-[b]reset model[/] reset to default model
-[b]change temperature[/] changes temperature
-[b]change top_p[/] changes top_p
-[b]change repeat_penalty[/] changes repeat_penalty
-[b]quit[/] or [b]exit[/] exits the program
-''', style="green")
+            elif message == "help":
+                with open("help.txt", "r") as f:
+                    help_text = f.read()
+                console.print(help_text, style="green")
                 
             # set personality    
-            elif prompt == "persona":
+            elif message == "persona":
                 persona = console.input("[grey66]Persona: [/]") #ask for new persona
                 self.persona(persona) #response passed to persona function
                 logging.info(f"Persona set to {persona}")
                 response = self.respond(self.messages)
-                console.print(response + "\n", style="gold3", justify="full", highlight=False) #print response
+                console.print(response, style="gold3", justify="full", highlight=False) #print response
 
             # use a custom prompt
-            elif prompt == "custom":
-                custom = console.input("[grey66]Custom prompt: [/]") #ask for custom prompt
+            elif message == "custom":
+                custom = console.input("[grey66]System prompt: [/]")
                 self.custom(custom)
-                logging.info(f"Custom prompt set: {custom}")
+                logging.info(f"Custom system prompt set: {custom}")
                 response = self.respond(self.messages)
-                console.print(response + "\n", style="gold3", justify="full", highlight=False) #print response
+                console.print(response, style="gold3", justify="full", highlight=False) #print response
 
             # reset history   
-            elif prompt == "reset":
+            elif message == "reset":
                 logging.info("Bot was reset")
                 reset()
             
-            elif prompt == "clear":
+            elif message == "clear":
                 os.system('clear')
-                logging.info("Bot was reset")
-                reset()
-                
+
             # stock model settings    
-            elif prompt == "default" or prompt == "stock":
+            elif message == "default" or message == "stock":
                 self.messages.clear()
                 logging.info("Stock model settings applied")
-                console.print("Stock model settings applied\n", style="green", highlight=False)
+                console.print("Stock model settings applied", style="green", highlight=False)
             
-            elif prompt == "change model":
-                console.print(f'''
-Current model: {self.model.removeprefix('ollama/')}
-Available models: {', '.join(sorted(list(self.models)))}
-''', style='green', highlight=False)
+            elif message == "change model":
+                console.print(f"Current model: {self.model}", style='green', highlight=False)
+                console.print(f"Available models: {', '.join(sorted(list(self.models)))}", style='green', highlight=False)
                 model = console.input("Enter model name: ")
                 if model in self.models:
                     self.model = self.models[model]
-                    console.print(f"Model set to {self.model.removeprefix('ollama/')}\n", style='green', highlight=False)
-                    logging.info(f"Model changed to {self.model.removeprefix('ollama/')}")
+                    console.print(f"Model set to {self.model}", style='green', highlight=False)
+                    logging.info(f"Model changed to {self.model}")
             
-            elif prompt == "reset model":
-                self.model = self.default_model
-                logging.info(f"Model changed to {self.model.removeprefix('ollama/')}")
+            elif message == "reset model":
+                self.model = self.models[self.default_model]
+                logging.info(f"Model changed to {self.model}")
 
-            elif prompt in ["change temperature", "change top_p", "change repeat_penalty"]:
-                attr_name = prompt.split()[-1]
+            elif message in ["change temperature", "change top_p", "change repeat_penalty"]:
+                attr_name = message.split()[-1]
                 min_val, max_val = {
                     "temperature": (0, 1),
                     "top_p": (0, 1),
@@ -182,33 +183,26 @@ Available models: {', '.join(sorted(list(self.models)))}
                     value = float(console.input(f"Input {attr_name} between {min_val} and {max_val} (currently {getattr(self, attr_name)}): "))
                     if min_val <= value <= max_val:
                         setattr(self, attr_name, value)
-                        console.print(f"{attr_name} set to {value}\n", style='green')
+                        console.print(f"{attr_name} set to {value}", style='green')
                         logging.info(f"{attr_name.capitalize()} changed to {value}")
                     else:
-                        console.print(f"Invalid input, {attr_name} is still {getattr(self, attr_name)}\n", style='green')
+                        console.print(f"Invalid input, {attr_name} is still {getattr(self, attr_name)}", style='green')
                 except ValueError:
-                    console.print(f"Invalid input, {attr_name} is still {getattr(self, attr_name)}\n", style='green')
+                    console.print(f"Invalid input, {attr_name} is still {getattr(self, attr_name)}", style='green')
 
             # normal response
-            elif prompt != None:
-                self.messages.append({"role": "user", "content": prompt})
-                logging.info(f"User: {prompt}")
+            elif message != None:
+                self.messages.append({"role": "user", "content": message})
+                logging.info(f"User: {message}")
                 response = self.respond(self.messages)
-                #special colorization for code blocks or quotations
-                if "```" in response or response.startswith('"'):
-                    console.print(response + "\n", style="gold3", justify="full") 
-                #no special colorization for responses without those
-                else:
-                    console.print(response + "\n", style="gold3", justify="full", highlight=False)
-            
+                console.print(Markdown(response), style="gold3", highlight=False)
             # no message
             else:
                 continue
 
 if __name__ == "__main__":
     os.system('clear')
-    #set the default personality
-    personality = "a minimalist AI assistant who provides longer responses when requested (do not give yourself a name)"
-    #start bot
-    bot = ollamarama(personality)
+    logging.basicConfig(filename='ollamarama.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+
+    bot = ollamarama()
     bot.start()
