@@ -11,15 +11,14 @@ from rich.markdown import Markdown
 from prompt_toolkit import prompt, PromptSession
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-#from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.completion import WordCompleter
 
 class ollamarama:
     def __init__(self):
-
         # holds history
         self.messages = []
 
-        #load models.json
+        #load config
         with open("config.json", "r") as f:
             self.config = json.load(f)
             f.close()
@@ -83,15 +82,17 @@ class ollamarama:
             return response_text
         
     def start(self):
-        console = Console()
-        console.width=80
+        console = Console(width=120, highlight=False)
         
         history = InMemoryHistory()
         session = PromptSession(
             history=history,
             auto_suggest=AutoSuggestFromHistory(),
-            #completer is kinda distracting, disabled for now
-            #completer=WordCompleter(["help", "exit", "quit", "reset", "clear", "stock", "persona", "custom", "change model", "change temperature", "change top_p", "change repeat_penalty", "reset model"])
+            completer=WordCompleter([
+                "help", "exit", "quit", "reset", "clear", 
+                "stock", "persona", "custom", "change model", 
+                "change temperature", "change top_p", "change repeat_penalty", 
+                "reset model"]) #sorta distracting, may want to disable
     )
 
         def reset():
@@ -102,18 +103,18 @@ class ollamarama:
             self.persona(self.personality)
             self.messages.append({"role": "user", "content": "introduce yourself"})
             try:
-                console.print("Please wait while the model loads...", style='bold', highlight=False)
+                console.print("Please wait while the model loads...", style='bold')
                 response_text = self.respond(self.messages)
                 os.system("clear")
-                console.print(Markdown(response_text + "  Type help for more information."), style='gold3', highlight=False)
+                console.print(Markdown(response_text + "  Type help for more information."), style='gold3')
             # fallback if generated introduction failed
-            except:
-                console.print("Hello, I am an AI that can assume any personality.  Type help for more information.", style='gold3', highlight=False)
+            except Exception as e:
+                console.print(e)
+                exit()                
 
         reset()
         
         message = ""
-        
         while message != "quit":
             # get the message
             message = session.prompt("> ")
@@ -126,15 +127,16 @@ class ollamarama:
             elif message == "help":
                 with open("help.txt", "r") as f:
                     help_text = f.read()
-                console.print(help_text, style="green")
+                    f.close()
+                console.print(help_text)
                 
             # set personality    
             elif message == "persona":
-                persona = console.input("[grey66]Persona: [/]") #ask for new persona
-                self.persona(persona) #response passed to persona function
+                persona = console.input("[grey66]Persona: [/]")
+                self.persona(persona)
                 logging.info(f"Persona set to {persona}")
                 response = self.respond(self.messages)
-                console.print(response, style="gold3", justify="full", highlight=False) #print response
+                console.print(response, style="gold3", justify="full")
 
             # use a custom prompt
             elif message == "custom":
@@ -142,7 +144,7 @@ class ollamarama:
                 self.custom(custom)
                 logging.info(f"Custom system prompt set: {custom}")
                 response = self.respond(self.messages)
-                console.print(response, style="gold3", justify="full", highlight=False) #print response
+                console.print(response, style="gold3", justify="full") 
 
             # reset history   
             elif message == "reset":
@@ -156,15 +158,15 @@ class ollamarama:
             elif message == "default" or message == "stock":
                 self.messages.clear()
                 logging.info("Stock model settings applied")
-                console.print("Stock model settings applied", style="green", highlight=False)
+                console.print("Stock model settings applied", style="green")
             
             elif message == "change model":
-                console.print(f"Current model: {self.model}", style='green', highlight=False)
-                console.print(f"Available models: {', '.join(sorted(list(self.models)))}", style='green', highlight=False)
+                console.print(f"[bold green]Current model[/]: [bold]{self.model}[/]")
+                console.print(f"[bold green]Available models[/]: {', '.join(sorted(list(self.models)))}")
                 model = console.input("Enter model name: ")
                 if model in self.models:
                     self.model = self.models[model]
-                    console.print(f"Model set to {self.model}", style='green', highlight=False)
+                    console.print(f"Model set to {self.model}", style='green')
                     logging.info(f"Model changed to {self.model}")
             
             elif message == "reset model":
@@ -195,7 +197,7 @@ class ollamarama:
                 self.messages.append({"role": "user", "content": message})
                 logging.info(f"User: {message}")
                 response = self.respond(self.messages)
-                console.print(Markdown(response), style="gold3", highlight=False)
+                console.print(Markdown(response), style="gold3")
             # no message
             else:
                 continue
