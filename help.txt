@@ -1,11 +1,11 @@
-[b]reset[/] resets to default personality.
-[b]clear[/] resets and clears the screen
-[b]stock[/] or [b]default[/] sets bot to stock model settings.
-[b]persona[/] activates personality changer, enter a new personality when prompted.
-[b]custom[/] set a custom system prompt
-[b]change model[/] list models and change current model
-[b]reset model[/] reset to default model
-[b]change temperature[/] changes temperature
-[b]change top_p[/] changes top_p
-[b]change repeat_penalty[/] changes repeat_penalty
-[b]quit[/] or [b]exit[/] exits the program
+[bold green]reset[/] resets to default personality.
+[bold green]clear[/] resets and clears the screen
+[bold green]stock[/] or [bold green]default[/] sets bot to stock model settings.
+[bold green]persona[/] activates personality changer, enter a new personality when prompted.
+[bold green]custom[/] set a custom system prompt
+[bold green]change model[/] list models and change current model
+[bold green]reset model[/] reset to default model
+[bold green]change temperature[/] changes temperature
+[bold green]change top_p[/] changes top_p
+[bold green]change repeat_penalty[/] changes repeat_penalty
+[bold green]quit[/] or [bold green]exit[/] exits the program
