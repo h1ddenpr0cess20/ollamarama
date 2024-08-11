@@ -94,7 +94,24 @@ class ollamarama:
                 "stock", "persona", "custom", "change model", 
                 "change temperature", "change top_p", "change repeat_penalty", 
                 "reset model"]) #sorta distracting, may want to disable
-    )
+        )
+        persona_history = InMemoryHistory()
+        persona_session = PromptSession(
+            history=persona_history,
+            auto_suggest=AutoSuggestFromHistory(),
+            completer=WordCompleter(['a sarcastic jerk',]) #callback to jerkbot, my original chatbot.  add whatever personas you'd like here
+        )
+        custom_history = InMemoryHistory()
+        custom_session = PromptSession(
+            history=custom_history,
+            auto_suggest=AutoSuggestFromHistory(),
+        )
+        model_history = InMemoryHistory()
+        model_session = PromptSession(
+            history=model_history,
+            auto_suggest=AutoSuggestFromHistory(),
+            completer=WordCompleter(self.models)
+        )
 
         def reset():
             logging.info("Bot reset")
@@ -133,19 +150,21 @@ class ollamarama:
                 
             # set personality    
             elif message == "persona":
-                persona = console.input("[grey66]Persona: [/]")
-                self.persona(persona)
-                logging.info(f"Persona set to {persona}")
-                response = self.respond(self.messages)
-                console.print(response, style="gold3", justify="full")
+                persona = persona_session.prompt("Persona: ")
+                if persona != "":
+                    self.persona(persona)
+                    logging.info(f"Persona set to {persona}")
+                    response = self.respond(self.messages)
+                    console.print(response, style="gold3", justify="full")
 
             # use a custom prompt
             elif message == "custom":
-                custom = console.input("[grey66]System prompt: [/]")
-                self.custom(custom)
-                logging.info(f"Custom system prompt set: {custom}")
-                response = self.respond(self.messages)
-                console.print(response, style="gold3", justify="full") 
+                custom = custom_session.prompt("System prompt: ")
+                if custom != "":
+                    self.custom(custom)
+                    logging.info(f"Custom system prompt set: {custom}")
+                    response = self.respond(self.messages)
+                    console.print(response, style="gold3", justify="full") 
 
             # reset history   
             elif message == "reset":
@@ -164,7 +183,7 @@ class ollamarama:
             elif message == "change model":
                 console.print(f"[bold green]Current model[/]: [bold]{self.model}[/]")
                 console.print(f"[bold green]Available models[/]: {', '.join(sorted(list(self.models)))}")
-                model = console.input("Enter model name: ")
+                model = model_session.prompt("Enter model name: ")
                 if model in self.models:
                     self.model = self.models[model]
                     console.print(f"Model set to {self.model}", style='green')
