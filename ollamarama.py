@@ -51,6 +51,7 @@ class ollamarama:
     def custom(self, system):
         self.messages.clear()
         self.messages.append({"role": "system", "content": system})
+        self.messages.append({"role": "user", "content": "introduce yourself"})
 
     # respond to messages
     def respond(self, message):
