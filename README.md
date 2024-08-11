@@ -1,7 +1,6 @@
 # ollamarama
 Terminal based AI chatbot with infinite personalities, using local LLMs with Ollama.  
 
-
 Also available for [IRC](https://github.com/h1ddenpr0cess20/ollamarama-irc) and [Matrix](https://github.com/h1ddenpr0cess20/ollamarama-matrix) chat protocols.
 
 ## Setup
@@ -13,7 +12,7 @@ You can install it with this command:
 curl https://ollama.ai/install.sh | sh
 ```
 
-Once it's all set up, you'll need to [download the models](https://ollama.ai/library) you want to use.  You can play with the available ones and see what works best for you.   Add those to the config.json file.  If you want to use the ones I've included, just run ollama pull _modelname_ for each.  
+Once it's all set up, you'll need to [download the models](https://ollama.ai/library) you want to use.  You can play with the available ones and see what works best for you.  Add those to the config.json file.  If you want to use the ones I've included, just run ollama pull _modelname_ for each.  
 
 You'll also need to install rich and prompt_toolkit
 ```
