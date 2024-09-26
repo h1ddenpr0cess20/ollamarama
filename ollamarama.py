@@ -50,12 +50,16 @@ class ollamarama:
                 logging.info(f"Persona set to {system}")
             else:
                 system = False
-        if custom:
+        elif custom:
             system = custom_session.prompt("System prompt: ")
             if system != "":
                 logging.info(f"Custom system prompt set: {system}")
             else:
                 system = False
+        else:
+            system = False
+            logging.info("Stock model settings applied")
+            self.console.print("Stock model settings applied", style="green")
         if system:
             self.messages.append({"role": "system", "content": system})
             self.messages.append({"role": "user", "content": "introduce yourself"})
@@ -100,11 +104,6 @@ class ollamarama:
             self.console.print(e)
             exit()
 
-    def stock(self):
-        self.messages.clear()
-        logging.info("Stock model settings applied")
-        self.console.print("Stock model settings applied", style="green")
-
     def change_model(self, reset=False):
         if reset:
             self.model = self.models[self.default_model]
@@ -140,7 +139,6 @@ class ollamarama:
             self.console.print(help_text)
 
     def start(self):
-        
         self.reset()
         
         commands = {
@@ -148,7 +146,7 @@ class ollamarama:
             "/exit": lambda: exit(),
             "/help": lambda: self.help_menu(),
             "/reset": lambda: self.reset(),
-            "/stock": lambda: self.stock(),
+            "/stock": lambda: self.set_prompt(),
             "/clear": lambda: os.system('clear'),
             "/persona": lambda: self.set_prompt(persona=True),
             "/custom": lambda: self.set_prompt(custom=True),

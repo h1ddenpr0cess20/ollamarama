@@ -3,11 +3,11 @@
 [bold green]/stock[/] sets bot to stock model settings.
 [bold green]/persona[/] activates personality changer, enter a new personality when prompted.
 [bold green]/custom[/] set a custom system prompt
-[bold green]/change model[/] list models and change current model
-[bold green]/reset model[/] reset to default model
-[bold green]/change temperature[/] changes temperature
-[bold green]/change top_p[/] changes top_p
-[bold green]/change repeat_penalty[/] changes repeat_penalty
+[bold green]/model[/] list models and change current model
+[bold green]/model reset[/] reset to default model
+[bold green]/temperature[/] changes temperature
+[bold green]/top_p[/] changes top_p
+[bold green]/repeat_penalty[/] changes repeat_penalty
 [bold green]/quit[/] or [bold green]/exit[/] exits the program
 
 Use Esc+Enter to input multiple lines
