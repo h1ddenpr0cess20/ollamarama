@@ -25,26 +25,26 @@ pip3 install rich prompt_toolkit
 python3 ollamarama.py
 ```
 
-**help**  shows the help menu
+**/help**  shows the help menu
 
-**reset**  resets to default personality
+**/reset**  resets to default personality
 
-**clear**  resets and clears the screen
+**/clear**  resets and clears the screen
 
-**stock**  or **default**  sets bot to stock model settings
+**/stock**  sets bot to stock model settings
 
-**persona**  activates personality changer
+**/persona**  activates personality changer
 
-**custom**  use a custom system prompt
+**/custom**  use a custom system prompt
 
-**change model**  list models and change the current model
+**/model**  list models and change the current model
 
-**reset model**  reset to default model
+**/model reset**  reset to default model
 
-**change temperature**  changes temperature
+**/temperature**  changes temperature
 
-**change top_p**  changes top_p
+**/top_p**  changes top_p
 
-**change repeat_penalty**  changes repeat_penalty
+**/repeat_penalty**  changes repeat_penalty
 
-**quit** or **exit**  exits the program
+**/quit** or **/exit**  exits the program
