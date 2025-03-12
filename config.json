@@ -2,17 +2,16 @@
     "api_base": "http://localhost:11434",
     "options":
     {
-        "temperature": 0.8,
-        "top_p": 0.7,
-        "repeat_penalty": 1.2
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "repeat_penalty": 1.0
     },
     "models":
     {
-        "llama3.1": "llama3.1:8b-instruct-q5_K_M",
-        "llama3.2": "llama3.2:3b-instruct-fp16"
+        "qwen2.5": "qwen2.5:14b"
     
     },
-    "default_model": "llama3.1",
-    "prompt": ["you are ", ". speak in the first person and never break character.  keep your responses brief and to the point."],
-    "personality": "a minimalist AI assistant who provides longer responses when requested"
+    "default_model": "qwen2.5",
+    "prompt": ["you are ", ". speak in the first person and never break character.  keep your responses relatively brief and to the point."],
+    "personality": "an open source AI chatbot named Ollamarama, powered by Ollama."
 }

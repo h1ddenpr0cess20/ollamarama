@@ -1,50 +1,91 @@
-# ollamarama
-Terminal based AI chatbot with infinite personalities, using local LLMs with Ollama.  
+# Ollamarama
 
-Also available for [IRC](https://github.com/h1ddenpr0cess20/ollamarama-irc) and [Matrix](https://github.com/h1ddenpr0cess20/ollamarama-matrix) chat protocols.
+![License](https://img.shields.io/github/license/h1ddenpr0cess20/ollamarama)
 
-## Setup
+A terminal-based AI chatbot with infinite personalities, powered by local LLMs through Ollama. Create, customize, and chat with AI personalities directly from your terminal.
 
-Install and familiarize yourself with [Ollama](https://ollama.ai/), make sure you can run local LLMs, etc.
+Also available for:
+- [IRC](https://github.com/h1ddenpr0cess20/ollamarama-irc)
+- [Matrix](https://github.com/h1ddenpr0cess20/ollamarama-matrix)
 
-You can install it with this command:
+## Table of Contents
+
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Commands](#commands)
+- [License](#license)
+
+## Features
+
+- Chat with locally-hosted LLMs using Ollama
+- Create unlimited custom AI personalities
+- Adjust model parameters like temperature and top_p on the fly
+- Switch between different AI models
+- Multi-line input support (Esc+Enter)
+- Rich markdown rendering for AI responses
+- Customizable system prompts
+
+## Prerequisites
+
+- Python 3.7 or higher
+- [Ollama](https://ollama.com/) installed and running
+- At least one LLM model pulled via Ollama
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/h1ddenpr0cess20/ollamarama.git
+cd ollamarama
 ```
-curl https://ollama.ai/install.sh | sh
+
+2. Install [Ollama](https://ollama.com/) if you haven't already:
+```bash
+curl https://ollama.com/install.sh | sh
 ```
 
-Once it's all set up, you'll need to [download the models](https://ollama.ai/library) you want to use.  You can play with the available ones and see what works best for you.  Add those to the config.json file.  If you want to use the ones I've included, just run ollama pull _modelname_ for each.  
-
-You'll also need to install rich and prompt_toolkit
-```
-pip3 install rich prompt_toolkit
+3. Pull at least one model using Ollama:
+```bash
+ollama pull qwen2.5:14b  # or any other model you prefer
 ```
 
-## Use
-
+4. Install Python dependencies:
+```bash
+pip install -r requirements.txt
 ```
+
+## Configuration
+
+Edit the `config.json` file to customize your setup:
+
+## Usage
+
+Run the application:
+```bash
 python3 ollamarama.py
 ```
 
-**/help**  shows the help menu
+Start chatting with the AI, or use commands to customize the experience.
 
-**/reset**  resets to default personality
+## Commands
 
-**/clear**  resets and clears the screen
+**Commands**
 
-**/stock**  sets bot to stock model settings
+* `/help`: Shows the help menu
+* `/reset`: Resets to default personality
+* `/clear`: Resets and clears the screen
+* `/stock`: Sets bot to stock model settings
+* `/persona`: Activates personality changer (prompts for new personality)
+* `/custom`: Use a custom system prompt
+* `/model`: List models and change the current model
+* `/model reset`: Reset to default model
+* `/temperature`: Changes temperature setting
+* `/top_p`: Changes top_p setting
+* `/repeat_penalty`: Changes repeat_penalty setting
+* `/quit` or `/exit`: Exits the program
 
-**/persona**  activates personality changer
+**Tip:** Use Esc+Enter to input multiple lines of text.
 
-**/custom**  use a custom system prompt
-
-**/model**  list models and change the current model
-
-**/model reset**  reset to default model
-
-**/temperature**  changes temperature
-
-**/top_p**  changes top_p
-
-**/repeat_penalty**  changes repeat_penalty
-
-**/quit** or **/exit**  exits the program
