@@ -8,10 +8,11 @@
     },
     "models":
     {
-        "qwen2.5": "qwen2.5:14b"
+        "gpt-oss": "gpt-oss:20b",
+        "qwen3": "qwen3"
     
     },
-    "default_model": "qwen2.5",
+    "default_model": "gpt-oss",
     "prompt": ["you are ", ". speak in the first person and never break character.  keep your responses relatively brief and to the point."],
     "personality": "an open source AI chatbot named Ollamarama, powered by Ollama."
 }

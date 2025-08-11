@@ -58,3 +58,13 @@ Thumbs.db
 # Local Ollama files that might be large
 *.gguf
 models/ 
+# Python packaging/build artifacts
+ollamarama.egg-info/
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+.tox/
+.coverage
+coverage.xml
+.pytest_cache/
