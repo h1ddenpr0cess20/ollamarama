@@ -5,6 +5,7 @@
 [bold green]/custom[/] set a custom system prompt
 [bold green]/model[/] list models and change current model
 [bold green]/model reset[/] reset to default model
+[bold green]/copy[/] copy last assistant response (raw Markdown) to clipboard
 [bold green]/temperature[/] changes temperature
 [bold green]/top_p[/] changes top_p
 [bold green]/repeat_penalty[/] changes repeat_penalty

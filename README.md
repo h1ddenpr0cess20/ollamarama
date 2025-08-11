@@ -104,6 +104,7 @@ Start chatting with the AI, or use commands to customize the experience.
 * `/custom`: Use a custom system prompt
 * `/model`: List models and change the current model
 * `/model reset`: Reset to default model
+* `/copy`: Copies the last bot response to clipboard
 * `/temperature`: Changes temperature setting
 * `/top_p`: Changes top_p setting
 * `/repeat_penalty`: Changes repeat_penalty setting

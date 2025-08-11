@@ -53,6 +53,7 @@ class App:
                 "/persona",
                 "/custom",
                 "/model",
+                "/copy",
                 "/temperature",
                 "/top_p",
                 "/repeat_penalty",
@@ -304,6 +305,30 @@ class App:
     def help_menu(self) -> None:
         print_help(self.console, "help.txt")
 
+    def copy_last_response(self) -> None:
+        # Find the last assistant message content
+        content = None
+        for msg in reversed(self.messages):
+            if msg.get("role") == "assistant":
+                text = msg.get("content", "")
+                if text:
+                    content = text
+                    break
+        if not content:
+            print_error(self.console, "No assistant response to copy.")
+            return
+
+        try:
+            import pyperclip  # type: ignore
+
+            pyperclip.copy(content.strip())
+            print_info(self.console, "Response copied to clipboard.")
+        except Exception:
+            print_error(
+                self.console,
+                "Copy failed. Install pyperclip: pip install pyperclip",
+            )
+
     def start(self) -> None:
         self.reset()
 
@@ -318,6 +343,7 @@ class App:
             "/custom": lambda: self.set_prompt(custom=True),
             "/model": lambda: self.change_model(),
             "/model reset": lambda: self.change_model(reset=True),
+            "/copy": lambda: self.copy_last_response(),
             "/temperature": lambda: self.change_option("temperature"),
             "/top_p": lambda: self.change_option("top_p"),
             "/repeat_penalty": lambda: self.change_option("repeat_penalty"),
