@@ -32,6 +32,18 @@ class AppConfig:
 
 def load_config(path: str | Path = "config.json") -> AppConfig:
     p = Path(path)
+    # If the path is not absolute, resolve relative to this file's directory
+    if not p.is_absolute():
+        base_dir = Path(__file__).parent.parent.parent  # workspace root
+        candidate = base_dir / p
+        if candidate.exists():
+            p = candidate
+        else:
+            # fallback to package directory (ollamarama/)
+            package_dir = Path(__file__).parent.parent
+            candidate2 = package_dir / p
+            if candidate2.exists():
+                p = candidate2
     if not p.exists():
         raise FileNotFoundError(f"Config file not found: {p}")
 
