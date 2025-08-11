@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import requests
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Iterator
 
 
 class OllamaClient:
@@ -37,3 +37,43 @@ class OllamaClient:
             text = text.strip('"')
         return text.strip()
 
+    def chat_stream(
+        self,
+        *,
+        model: str,
+        messages: List[Dict[str, str]],
+        options: Dict[str, Any],
+        timeout: int = 180,
+    ) -> Iterator[str]:
+        """Yield content chunks from Ollama chat stream.
+
+        Uses JSONL responses with a final done object. Yields only non-empty
+        content strings from the "message.content" field.
+        """
+        import json
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            "options": options,
+        }
+        with requests.post(
+            self.api_url,
+            json=payload,
+            timeout=timeout,
+            stream=True,
+        ) as resp:
+            resp.raise_for_status()
+            for line in resp.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+                obj = json.loads(line)
+                if isinstance(obj, dict) and obj.get("error"):
+                    raise RuntimeError(obj.get("error"))
+                if obj.get("done"):
+                    break
+                msg = obj.get("message") or {}
+                chunk = msg.get("content") or ""
+                if chunk:
+                    yield chunk
