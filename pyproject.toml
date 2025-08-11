@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ollamarama"
+version = "1.0.0"
+description = "Terminal-based AI chatbot for local LLMs via Ollama"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Dustin Whyte" }]
+license = { file = "LICENSE" }
+dependencies = [
+  "requests",
+  "rich",
+  "prompt_toolkit"
+]
+
+[project.scripts]
+ollamarama = "ollamarama.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ollamarama*"]
+

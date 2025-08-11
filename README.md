@@ -49,12 +49,12 @@ curl https://ollama.com/install.sh | sh
 
 3. Pull at least one model using Ollama:
 ```bash
-ollama pull qwen2.5:14b  # or any other model you prefer
+ollama pull qwen3  # or any other model you prefer
 ```
 
-4. Install Python dependencies:
+4. Install in editable mode (recommended for local use):
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Configuration
@@ -65,7 +65,29 @@ Edit the `config.json` file to customize your setup:
 
 Run the application:
 ```bash
-python3 ollamarama.py
+# As a module
+python -m ollamarama
+
+# Or via the CLI entrypoint after install
+ollamarama
+```
+
+You can also pass basic flags to start with specific settings:
+
+```bash
+# Choose a model by key or full name
+ollamarama --model qwen3      # uses key from config.json
+ollamarama --model qwen3:latest  # uses full model name directly
+
+# Start with a custom persona or stock settings
+ollamarama --persona "a terse unix greybeard"
+ollamarama --stock
+
+# Override generation options
+ollamarama --temperature 0.4 --top-p 0.9 --repeat-penalty 1.1
+
+# Point to a different Ollama API base
+ollamarama --api-base http://localhost:11434
 ```
 
 Start chatting with the AI, or use commands to customize the experience.
@@ -88,4 +110,3 @@ Start chatting with the AI, or use commands to customize the experience.
 * `/quit` or `/exit`: Exits the program
 
 **Tip:** Use Esc+Enter to input multiple lines of text.
-
