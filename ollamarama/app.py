@@ -321,7 +321,7 @@ class App:
         try:
             import pyperclip  # type: ignore
 
-            pyperclip.copy(content)
+            pyperclip.copy(content.strip())
             print_info(self.console, "Response copied to clipboard.")
         except Exception:
             print_error(
