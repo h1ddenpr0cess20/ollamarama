@@ -14,5 +14,8 @@
     },
     "default_model": "gpt-oss",
     "prompt": ["you are ", ". speak in the first person and never break character.  keep your responses relatively brief and to the point."],
-    "personality": "an open source AI chatbot named Ollamarama, powered by Ollama."
+    "personality": "an open source AI chatbot named Ollamarama, powered by Ollama.",
+    "mcp_servers": {
+        
+    }
 }
