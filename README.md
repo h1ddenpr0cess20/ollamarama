@@ -15,6 +15,7 @@ Also available for:
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [Docker](#docker)
 - [Commands](#commands)
 - [License](#license)
 
@@ -91,6 +92,26 @@ ollamarama --api-base http://localhost:11434
 ```
 
 Start chatting with the AI, or use commands to customize the experience.
+
+## Docker
+
+- Build image:
+  - `docker build -t ollamarama .`
+
+- Run against a host Ollama daemon (Linux):
+  - `docker run -it --rm --name ollamarama \
+     --add-host=host.docker.internal:host-gateway \
+     -v "$(pwd)/config.json:/app/config.json:ro" \
+     ollamarama --api-base http://host.docker.internal:11434`
+
+- Run with Docker Compose (spins up Ollama + app):
+  - `docker compose up -d ollama` (first time pulls models separately via `docker exec -it ollama ollama pull qwen3`)
+  - `docker compose run --rm app` (interactive chat; add flags like `--model qwen3` as needed)
+
+Notes:
+- The TUI is interactive; always use `-it` or `docker compose run` (not `up`) for the `app` service.
+- Copy-to-clipboard depends on the host; it may be unavailable inside the container.
+- To use a different API base, append flags after the image name, e.g. `--api-base http://ollama:11434` in Compose.
 
 ## Commands
 

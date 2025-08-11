@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+  app:
+    build: .
+    image: ollamarama:local
+    container_name: ollamarama
+    depends_on:
+      - ollama
+    stdin_open: true   # docker run -i
+    tty: true          # docker run -t
+    working_dir: /app
+    # Mount config/help so you can tweak without rebuilding
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./help.txt:/app/help.txt:ro
+    # Talk to the ollama service in this compose network
+    command: ["--api-base", "http://ollama:11434"]
+
+volumes:
+  ollama:
+    driver: local
+
