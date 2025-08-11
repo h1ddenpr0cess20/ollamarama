@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import requests
-from typing import Any, Dict, List, Iterator
+from typing import Any, Dict, List, Iterator, Optional
 
 
 class OllamaClient:
@@ -12,17 +12,23 @@ class OllamaClient:
         self,
         *,
         model: str,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         options: Dict[str, Any],
         stream: bool = False,
         timeout: int = 180,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[str] = None,
     ) -> str:
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model,
             "messages": messages,
             "stream": stream,
             "options": options,
         }
+        if tools:
+            payload["tools"] = tools
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
 
         response = requests.post(self.api_url, json=payload, timeout=timeout)
         response.raise_for_status()
@@ -41,7 +47,7 @@ class OllamaClient:
         self,
         *,
         model: str,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         options: Dict[str, Any],
         timeout: int = 180,
     ) -> Iterator[str]:
@@ -77,3 +83,28 @@ class OllamaClient:
                 chunk = msg.get("content") or ""
                 if chunk:
                     yield chunk
+
+    def chat_with_tools(
+        self,
+        *,
+        model: str,
+        messages: List[Dict[str, Any]],
+        options: Dict[str, Any],
+        tools: List[Dict[str, Any]],
+        tool_choice: Optional[str] = "auto",
+        timeout: int = 180,
+    ) -> Dict[str, Any]:
+        """Call /api/chat with tools and return the full JSON response."""
+        payload: Dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "stream": False,
+            "options": options,
+            "tools": tools,
+        }
+        if tool_choice is not None:
+            payload["tool_choice"] = tool_choice
+
+        response = requests.post(self.api_url, json=payload, timeout=timeout)
+        response.raise_for_status()
+        return response.json()
