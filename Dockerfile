@@ -7,6 +7,12 @@ ENV PIP_NO_CACHE_DIR=1 \
 
 WORKDIR /app
 
+# System deps for SSL and timezones (for tools making HTTPS calls)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy project metadata first for better caching
 COPY pyproject.toml README.md LICENSE /app/
 COPY ollamarama /app/ollamarama
@@ -27,4 +33,3 @@ USER appuser
 
 ENTRYPOINT ["ollamarama"]
 CMD []
-

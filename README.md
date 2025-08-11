@@ -126,6 +126,7 @@ Notes:
 * `/model`: List models and change the current model
 * `/model reset`: Reset to default model
 * `/copy`: Copies the last bot response to clipboard
+* `/tools`: Enables or disables tool use
 * `/temperature`: Changes temperature setting
 * `/top_p`: Changes top_p setting
 * `/repeat_penalty`: Changes repeat_penalty setting

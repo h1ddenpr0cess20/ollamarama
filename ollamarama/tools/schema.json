@@ -1,0 +1,99 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "Get current weather for a city using Open-Meteo.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "City name, e.g., 'Tokyo' or 'San Francisco'."
+          },
+          "units": {
+            "type": "string",
+            "enum": ["metric", "imperial"],
+            "description": "Units: metric (°C, km/h) or imperial (°F, mph)."
+          }
+        },
+        "required": ["city"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_numbers",
+      "description": "Sum a list of numbers and return the result as a string.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "numbers": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Numbers to add together."
+          }
+        },
+        "required": ["numbers"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "multiply_numbers",
+      "description": "Multiply a list of numbers and return the result as a string.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "numbers": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Numbers to multiply."
+          }
+        },
+        "required": ["numbers"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_time",
+      "description": "Get the current time. Supports 'UTC', 'local', or IANA timezone names if available.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timezone_name": {
+            "type": "string",
+            "description": "Timezone: 'UTC', 'local', or IANA name like 'America/New_York'."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "word_count",
+      "description": "Count words in the given text and return the integer as a string.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text to analyze."
+          }
+        },
+        "required": ["text"],
+        "additionalProperties": false
+      }
+    }
+  }
+]

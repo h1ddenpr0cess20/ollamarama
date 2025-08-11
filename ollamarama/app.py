@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from rich.live import Live
 from rich.markdown import Markdown
@@ -11,6 +11,7 @@ from rich.spinner import Spinner
 from .client import OllamaClient
 from .config import AppConfig, load_config
 from .render import get_console, print_error, print_info, print_markdown, print_help
+from .tools import execute_tool
 from .sessions import create_keybindings, create_session
 
 
@@ -35,6 +36,10 @@ class App:
         self.options: Dict[str, float] = self.config.options.to_dict()
         # Keep a safe copy for resets
         self.defaults: Dict[str, float] = copy.deepcopy(self.options)
+
+        # Tool calling
+        self.tools_enabled: bool = True
+        self._tools_schema = self._load_tools_schema()
 
         self.default_personality: str = self.config.personality
         self.personality: str = self.default_personality
@@ -73,6 +78,135 @@ class App:
             key_bindings=kb,
             words=self.models.keys(),
         )
+
+    # ---- Tool calling helpers ----
+    def toggle_tools(self) -> None:
+        self.tools_enabled = not self.tools_enabled
+        state = "enabled" if self.tools_enabled else "disabled"
+        print_info(self.console, f"Tools {state}")
+
+    def _execute_tool(self, name: str, arguments: Dict[str, Any]) -> str:
+        return execute_tool(name, arguments)
+
+    def _load_tools_schema(self, path: str | None = None) -> List[Dict[str, Any]]:
+        import json
+        from pathlib import Path
+        # Try importlib.resources for robust package data access
+        try:
+            from importlib import resources
+            with resources.files("ollamarama.tools").joinpath("schema.json").open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return data
+            raise ValueError("schema.json must be a JSON array of tool definitions")
+        except Exception:
+            # Fallback to filesystem path resolution
+            try:
+                if path is None:
+                    here = Path(__file__).resolve().parent
+                    path = str(here / "tools" / "schema.json")
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    return data
+                raise ValueError("schema.json must be a JSON array of tool definitions")
+            except FileNotFoundError:
+                print_info(self.console, "No tools/schema.json found; tool calling disabled")
+                self.tools_enabled = False
+                return []
+            except Exception as e:
+                print_error(self.console, f"Failed to load schema.json: {e}")
+                self.tools_enabled = False
+                return []
+
+    def respond_with_tools(self, message: List[Dict[str, Any]]) -> str:
+        """Handle tool-calling loop with Ollama's /api/chat and local tool execution.
+
+        Repeats until the assistant returns content without further tool calls.
+        Streams the final assistant message for parity with normal replies.
+        """
+        try:
+            result = self.client.chat_with_tools(
+                model=self.model,
+                messages=message,
+                options=self.options,
+                tools=self._tools_schema,
+                tool_choice="auto",
+            )
+        except Exception as e:
+            err = f"Failed to get tool-aware response: {e}"
+            print_error(self.console, err)
+            logging.exception(err)
+            return ""
+
+        # Tool loop
+        max_iterations = 8
+        iterations = 0
+        while iterations < max_iterations:
+            msg = result.get("message", {})
+            tool_calls = msg.get("tool_calls") or []
+            if not tool_calls:
+                break
+            # Append assistant tool_calls message to history as-is
+            self.messages.append(msg)
+            for call in tool_calls:
+                func = (call.get("function") or {})
+                name = func.get("name") or ""
+                raw_args = func.get("arguments")
+                try:
+                    # arguments may be stringified JSON or dict
+                    if isinstance(raw_args, str):
+                        import json as _json
+
+                        args = _json.loads(raw_args) if raw_args.strip() else {}
+                    elif isinstance(raw_args, dict):
+                        args = raw_args
+                    else:
+                        args = {}
+                except Exception:
+                    args = {}
+                tool_result = self._execute_tool(name, args)
+                # Echo tool result back
+                tool_msg: Dict[str, Any] = {
+                    "role": "tool",
+                    "content": str(tool_result),
+                }
+                # If an id is present, attach it for threading
+                if call.get("id"):
+                    tool_msg["tool_call_id"] = call["id"]
+                self.messages.append(tool_msg)
+
+            try:
+                result = self.client.chat_with_tools(
+                    model=self.model,
+                    messages=self.messages,
+                    options=self.options,
+                    tools=self._tools_schema,
+                    tool_choice="auto",
+                )
+            except Exception as e:
+                err = f"Failed to continue after tool call: {e}"
+                print_error(self.console, err)
+                logging.exception(err)
+                return ""
+            iterations += 1
+
+        # No more tool calls: now stream the final assistant content
+        streamed = self.respond_stream(self.messages)
+
+        # After a streamed response, trim and lightly clean tool artifacts
+        if len(self.messages) > 24:
+            if self.messages[0].get("role") == "system":
+                self.messages.pop(1)
+            else:
+                self.messages.pop(0)
+            self.messages[:] = [
+                m
+                for m in self.messages
+                if not (m.get("role") == "tool" or (isinstance(m, dict) and m.get("tool_calls")))
+            ]
+
+        return streamed
 
     @staticmethod
     def _visible_after_think(text: str) -> str:
@@ -124,8 +258,10 @@ class App:
         if system:
             self.messages.append({"role": "system", "content": system})
             self.messages.append({"role": "user", "content": "introduce yourself"})
-            response = self.respond_stream(self.messages)
-            # respond_stream already prints progressively; ensure newline after.
+            if self.tools_enabled and self._tools_schema:
+                _ = self.respond_with_tools(self.messages)
+            else:
+                _ = self.respond_stream(self.messages)
             self.console.print()
 
     def respond(self, message: List[Dict[str, str]]) -> str:
@@ -347,6 +483,7 @@ class App:
             "/temperature": lambda: self.change_option("temperature"),
             "/top_p": lambda: self.change_option("top_p"),
             "/repeat_penalty": lambda: self.change_option("repeat_penalty"),
+            "/tools": lambda: self.toggle_tools(),
         }
 
         while True:
@@ -356,7 +493,9 @@ class App:
             elif message is not None:
                 self.messages.append({"role": "user", "content": message})
                 logging.info(f"User: {message}")
-                # Stream the answer instead of waiting for full response
-                response = self.respond_stream(self.messages)
+                if self.tools_enabled and self._tools_schema:
+                    _ = self.respond_with_tools(self.messages)
+                else:
+                    _ = self.respond_stream(self.messages)
                 # Ensure newline after streaming output and keep markdown print for consistency if desired
                 # print_markdown(self.console, response)
