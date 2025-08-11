@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import os
 from typing import Any, Dict, List
 
 from rich.live import Live
@@ -13,6 +14,7 @@ from .config import AppConfig, load_config
 from .render import get_console, print_error, print_info, print_markdown, print_help
 from .tools import execute_tool
 from .sessions import create_keybindings, create_session
+from .fastmcp_client import FastMCPClient
 
 
 class App:
@@ -39,7 +41,22 @@ class App:
 
         # Tool calling
         self.tools_enabled: bool = True
-        self._tools_schema = self._load_tools_schema()
+        self.mcp_client: FastMCPClient | None = None
+        if self.config.mcp_servers:
+            urls = [url.strip() for url in self.config.mcp_servers.values() if url.strip()]
+            if urls:
+                try:
+                    self.mcp_client = FastMCPClient(urls)
+                    self._tools_schema = self.mcp_client.list_tools()
+                except Exception as e:
+                    print_error(self.console, f"Failed to load tools from MCP server: {e}")
+                    self._tools_schema = self._load_tools_schema()
+            else:
+                self._tools_schema = self._load_tools_schema()
+        else:
+            self._tools_schema = self._load_tools_schema()
+        if not self._tools_schema:
+            self.tools_enabled = False
 
         self.default_personality: str = self.config.personality
         self.personality: str = self.default_personality
@@ -58,6 +75,7 @@ class App:
                 "/persona",
                 "/custom",
                 "/model",
+                "/tools",
                 "/copy",
                 "/temperature",
                 "/top_p",
@@ -86,6 +104,8 @@ class App:
         print_info(self.console, f"Tools {state}")
 
     def _execute_tool(self, name: str, arguments: Dict[str, Any]) -> str:
+        if self.mcp_client is not None:
+            return self.mcp_client.call_tool(name, arguments)
         return execute_tool(name, arguments)
 
     def _load_tools_schema(self, path: str | None = None) -> List[Dict[str, Any]]:
