@@ -4,6 +4,10 @@ import copy
 import logging
 from typing import Dict, List
 
+from rich.live import Live
+from rich.markdown import Markdown
+from rich.spinner import Spinner
+
 from .client import OllamaClient
 from .config import AppConfig, load_config
 from .render import get_console, print_error, print_info, print_markdown, print_help
@@ -119,8 +123,9 @@ class App:
         if system:
             self.messages.append({"role": "system", "content": system})
             self.messages.append({"role": "user", "content": "introduce yourself"})
-            response = self.respond(self.messages)
-            self.console.print(response, style="gold3", justify="left")
+            response = self.respond_stream(self.messages)
+            # respond_stream already prints progressively; ensure newline after.
+            self.console.print()
 
     def respond(self, message: List[Dict[str, str]]) -> str:
         try:
@@ -142,6 +147,113 @@ class App:
                 self.messages.pop(1)
             else:
                 self.messages.pop(0)
+        return visible
+
+    def respond_stream(self, message: List[Dict[str, str]]) -> str:
+        """Stream a response and render progressively with Rich Live.
+
+        Applies the same think-tag hiding policy as respond(): if the stream
+        starts with a <think> block, suppress output until the first closing
+        </think> tag and then reveal only the subsequent content. If an opening
+        <think> appears without a closing tag, emit nothing and return an empty
+        string.
+        """
+        total: str = ""
+        visible_accum: str = ""
+        suppress_until_close: bool | None = None
+        emitted_upto: int = 0
+
+        try:
+            interrupted = False
+            # Use Rich Live to continuously update a Markdown renderable
+            spinner = Spinner("dots", text="thinking…", style="gold3")
+            showing_spinner = True
+            with Live(
+                spinner,
+                console=self.console,
+                refresh_per_second=24,
+            ) as live:
+                try:
+                    for chunk in self.client.chat_stream(
+                        model=self.model, messages=message, options=self.options
+                    ):
+                        # Accumulate raw text
+                        total += chunk
+
+                        # Decide suppression on first content
+                        if suppress_until_close is None:
+                            leading = total.lstrip().lower()
+                            suppress_until_close = leading.startswith("<think>")
+
+                        if suppress_until_close:
+                            lower = total.lower()
+                            close_idx = lower.find("</think>")
+                            if close_idx != -1:
+                                # Start emitting after the first closing tag
+                                start = close_idx + len("</think>")
+                                # Emit everything after close (that hasn't been emitted)
+                                to_emit = total[start:]
+                                if to_emit:
+                                    visible_accum += to_emit
+                                    live.update(
+                                        Markdown(visible_accum, code_theme="monokai", style="gold3"),
+                                        refresh=True,
+                                    )
+                                emitted_upto = len(total)
+                                suppress_until_close = False
+                            else:
+                                # Still suppressing; keep spinner visible
+                                if not showing_spinner:
+                                    live.update(spinner, refresh=True)
+                                    showing_spinner = True
+                                continue
+                        else:
+                            # Emit any newly added text
+                            to_emit = total[emitted_upto:]
+                            if to_emit:
+                                visible_accum += to_emit
+                                if showing_spinner:
+                                    showing_spinner = False
+                                live.update(
+                                    Markdown(visible_accum, code_theme="monokai", style="gold3"),
+                                    refresh=True,
+                                )
+                                emitted_upto = len(total)
+                except KeyboardInterrupt:
+                    interrupted = True
+                    # Gracefully stop streaming on Ctrl+C
+                    pass
+        except Exception as e:
+            err = f"Failed to stream response: {e}"
+            print_error(self.console, err)
+            logging.exception(err)
+            return ""
+
+        if 'interrupted' in locals() and interrupted:
+            logging.info("Streaming interrupted by user (Ctrl+C)")
+            # Add a newline so the next prompt doesn't collide with the live area
+            self.console.print()
+            # Subtle status to indicate stop
+            self.console.print("[stopped]", style="italic dim")
+
+        # Finalize visible text respecting think rules
+        if suppress_until_close:
+            # Opening <think> without closing: hide all so far
+            visible = ""
+        else:
+            visible = visible_accum
+
+        # Persist assistant message to history when non-empty or not an interruption-only think block
+        if not ('interrupted' in locals() and interrupted and not visible.strip()):
+            self.messages.append({"role": "assistant", "content": visible})
+            logging.info(f"Bot: {visible}")
+
+        if len(self.messages) > 24:
+            if self.messages[0]["role"] == "system":
+                self.messages.pop(1)
+            else:
+                self.messages.pop(0)
+
         return visible
 
     def reset(self) -> None:
@@ -218,5 +330,7 @@ class App:
             elif message is not None:
                 self.messages.append({"role": "user", "content": message})
                 logging.info(f"User: {message}")
-                response = self.respond(self.messages)
-                print_markdown(self.console, response)
+                # Stream the answer instead of waiting for full response
+                response = self.respond_stream(self.messages)
+                # Ensure newline after streaming output and keep markdown print for consistency if desired
+                # print_markdown(self.console, response)
