@@ -11,8 +11,8 @@
 [bold green]/repeat_penalty[/] changes repeat_penalty
 [bold green]/quit[/] or [bold green]/exit[/] exits the program
 
-[bold green]/tools[/] toggle built-in tool calling (e.g., weather)
+[bold green]/tools[/] toggle tool calling (built-in and MCP)
 
-Tools: The assistant can call a local function `get_weather` to fetch current weather for a city using Open‑Meteo. Example: "What's the weather in Tokyo in metric?"
+Tools: The assistant can call local functions like `get_weather` or tools from configured MCP servers. Example: "What's the weather in Tokyo in metric?"
 
 Use Esc+Enter to input multiple lines
