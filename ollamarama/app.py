@@ -45,18 +45,46 @@ class App:
         self._mcp_tool_names: set[str] = set()
         builtin_schema = self._load_tools_schema()
         mcp_schema: List[Dict[str, Any]] = []
+        # Initialize MCP servers robustly: if one server fails, others can still load
         if self.config.mcp_servers:
-            servers = {k: v for k, v in self.config.mcp_servers.items() if v}
-            if servers:
+            # Filter out empty entries
+            candidate_servers = {k: v for k, v in self.config.mcp_servers.items() if v}
+            successful_servers: dict[str, Any] = {}
+            mcp_schema: List[Dict[str, Any]] = []
+            for name, cfg in candidate_servers.items():
                 try:
-                    self.mcp_client = FastMCPClient(servers)
-                    mcp_schema = self.mcp_client.list_tools()
-                    for tool in mcp_schema:
+                    # Attempt to create a client for a single server
+                    client = FastMCPClient({name: cfg})
+                    tools = client.list_tools()
+                    # If successful, merge into overall schema and keep the server
+                    successful_servers[name] = cfg
+                    mcp_schema.extend(tools)
+                    # Register tool function names
+                    for tool in tools:
                         fn = (tool.get("function") or {}).get("name")
                         if isinstance(fn, str):
                             self._mcp_tool_names.add(fn)
                 except Exception as e:
-                    print_error(self.console, f"Failed to load tools from MCP server: {e}")
+                    # Log the failure but continue with other servers
+                    print_error(
+                        self.console,
+                        f"Failed to load tools from MCP server '{name}': {e}",
+                    )
+            # If any servers succeeded, create a client handling all successful ones
+            if successful_servers:
+                try:
+                    self.mcp_client = FastMCPClient(successful_servers)
+                    # Populate the consolidated client's tool->server map by listing tools once
+                    _ = self.mcp_client.list_tools()
+                except Exception as e:
+                    # This should be rare; log and continue without MCP client
+                    print_error(
+                        self.console,
+                        f"Failed to initialize FastMCPClient with successful servers: {e}",
+                    )
+            else:
+                # No servers could be loaded
+                self.mcp_client = None
             # If servers dict is empty, mcp_schema remains empty
         # Combine MCP and bundled schema (MCP takes precedence on name clashes)
         combined: List[Dict[str, Any]] = list(mcp_schema)
