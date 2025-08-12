@@ -2,65 +2,71 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shlex
 from typing import Any, Dict, List, Mapping
 
-import shlex
 from fastmcp import Client
 import mcp.types
 
 
 class FastMCPClient:
+    """Minimal wrapper around fastmcp.Client for tool discovery and calls."""
+
     def __init__(self, servers: Mapping[str, str | Dict[str, Any]]) -> None:
-        self._clients: List[Client] = []
+        config: Dict[str, Dict[str, Any]] = {}
         for name, spec in servers.items():
-            client: Client | None = None
-            if isinstance(spec, dict):
-                config = {"mcpServers": {name: spec}}
-                client = Client(config)
-            elif isinstance(spec, str):
+            if isinstance(spec, str):
                 spec = spec.strip()
+                if not spec:
+                    continue
                 if spec.startswith("http://") or spec.startswith("https://"):
-                    client = Client(spec)
+                    config[name] = {"url": spec}
                 else:
                     parts = shlex.split(spec)
                     if not parts:
                         continue
-                    config = {"mcpServers": {name: {"command": parts[0], "args": parts[1:]}}}
-                    client = Client(config)
-            if client is not None:
-                self._clients.append(client)
-        self._tool_clients: Dict[str, Client] = {}
+                    config[name] = {"command": parts[0], "args": parts[1:]}
+            elif isinstance(spec, dict):
+                config[name] = spec
+
+        if not config:
+            raise ValueError("No valid MCP servers provided")
+
+        self._client = Client({"mcpServers": config})
+        # map public tool name -> internal name used by fastmcp
+        self._tool_map: Dict[str, str] = {}
 
     async def _list_tools_async(self) -> List[Dict[str, Any]]:
         schema: List[Dict[str, Any]] = []
-        for client in self._clients:
-            async with client:
-                tools = await client.list_tools()
-            for tool in tools:
-                self._tool_clients[tool.name] = client
-                schema.append(
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": tool.name,
-                            "description": tool.description or "",
-                            "parameters": tool.inputSchema
-                            or {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": False,
-                            },
+        async with self._client:
+            tools = await self._client.list_tools()
+        for tool in tools:
+            internal_name = tool.name
+            public_name = internal_name.split("_", 1)[1] if "_" in internal_name else internal_name
+            self._tool_map[public_name] = internal_name
+            schema.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": public_name,
+                        "description": tool.description or "",
+                        "parameters": tool.inputSchema
+                        or {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": False,
                         },
-                    }
-                )
+                    },
+                }
+            )
         return schema
 
     def list_tools(self) -> List[Dict[str, Any]]:
         return asyncio.run(self._list_tools_async())
 
-    async def _call_tool_async(self, client: Client, name: str, arguments: Dict[str, Any]) -> Any:
-        async with client:
-            result = await client.call_tool(name, arguments)
+    async def _call_tool_async(self, name: str, arguments: Dict[str, Any]) -> Any:
+        async with self._client:
+            result = await self._client.call_tool(name, arguments)
         if result.data is not None:
             return result.data
         if result.structured_content is not None:
@@ -72,13 +78,15 @@ class FastMCPClient:
         return {"result": "\n".join(texts)}
 
     def call_tool(self, name: str, arguments: Dict[str, Any]) -> str:
-        client = self._tool_clients.get(name)
-        if client is None:
+        internal_name = self._tool_map.get(name)
+        if internal_name is None:
             return json.dumps({"error": f"Unknown tool: {name}"}, ensure_ascii=False)
         try:
-            data = asyncio.run(self._call_tool_async(client, name, arguments))
+            data = asyncio.run(self._call_tool_async(internal_name, arguments))
         except Exception as e:
-            return json.dumps({"error": f"Tool execution error for {name}: {e}"}, ensure_ascii=False)
+            return json.dumps(
+                {"error": f"Tool execution error for {name}: {e}"}, ensure_ascii=False
+            )
         try:
             return json.dumps(data, ensure_ascii=False)
         except Exception:
