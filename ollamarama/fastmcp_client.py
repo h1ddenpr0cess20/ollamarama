@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import shlex
-from typing import Any, Dict, List, Mapping
+from typing import Any, Dict, List, Mapping, Sequence
 
 from fastmcp import Client
 import mcp.types
@@ -12,7 +12,7 @@ import mcp.types
 class FastMCPClient:
     """Minimal wrapper around fastmcp.Client for tool discovery and calls."""
 
-    def __init__(self, servers: Mapping[str, str | Dict[str, Any]]) -> None:
+    def __init__(self, servers: Mapping[str, Any]) -> None:
         config: Dict[str, Dict[str, Any]] = {}
         for name, spec in servers.items():
             if isinstance(spec, str):
@@ -26,8 +26,13 @@ class FastMCPClient:
                     if not parts:
                         continue
                     config[name] = {"command": parts[0], "args": parts[1:]}
-            elif isinstance(spec, dict):
-                config[name] = spec
+            elif isinstance(spec, Sequence) and not isinstance(spec, (bytes, bytearray, str)):
+                parts = list(spec)
+                if not parts:
+                    continue
+                config[name] = {"command": parts[0], "args": parts[1:]}
+            elif isinstance(spec, Mapping):
+                config[name] = dict(spec)
 
         if not config:
             raise ValueError("No valid MCP servers provided")
