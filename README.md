@@ -29,7 +29,7 @@ Also available for:
 - Tool calling:
   - Auto-discovers tools from configured MCP servers (via `fastmcp`) and merges them with a bundled `tools/schema.json`
   - Toggle at runtime with `/tools`
-- Safe streaming that hides any content inside <think>...</think> blocks
+- Safe streaming that hides any content inside \<think\>...\</think\> blocks
 - Multi-line input support (Esc+Enter)
 - Rich Markdown rendering for AI responses
 - Copy last response to clipboard
