@@ -28,7 +28,6 @@ class AppConfig:
     prompt: List[str]
     personality: str
     options: ModelOptions
-    mcp_servers: Dict[str, str] | None = None
 
 
 def load_config(path: str | Path = "config.json") -> AppConfig:
@@ -73,8 +72,6 @@ def load_config(path: str | Path = "config.json") -> AppConfig:
         repeat_penalty=float(opts_raw.get("repeat_penalty", 1.0)),
     )
 
-    mcp_servers: Dict[str, str] | None = raw.get("mcp_servers")
-
     return AppConfig(
         api_base=api_base,
         models=models,
@@ -82,5 +79,5 @@ def load_config(path: str | Path = "config.json") -> AppConfig:
         prompt=prompt,
         personality=personality,
         options=options,
-        mcp_servers=mcp_servers,
     )
+

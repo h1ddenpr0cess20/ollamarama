@@ -15,7 +15,7 @@ class OllamaClient:
         messages: List[Dict[str, Any]],
         options: Dict[str, Any],
         stream: bool = False,
-        timeout: int = 360,
+        timeout: int = 180,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[str] = None,
     ) -> str:
@@ -49,7 +49,7 @@ class OllamaClient:
         model: str,
         messages: List[Dict[str, Any]],
         options: Dict[str, Any],
-        timeout: int = 360,
+        timeout: int = 180,
     ) -> Iterator[str]:
         """Yield content chunks from Ollama chat stream.
 
@@ -92,7 +92,7 @@ class OllamaClient:
         options: Dict[str, Any],
         tools: List[Dict[str, Any]],
         tool_choice: Optional[str] = "auto",
-        timeout: int = 360,
+        timeout: int = 180,
     ) -> Dict[str, Any]:
         """Call /api/chat with tools and return the full JSON response."""
         payload: Dict[str, Any] = {
