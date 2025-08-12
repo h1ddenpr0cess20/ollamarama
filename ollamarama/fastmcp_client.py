@@ -2,17 +2,22 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Mapping, Sequence
 
 from fastmcp import Client
 import mcp.types
 
 
 class FastMCPClient:
-    def __init__(self, urls: Sequence[str]) -> None:
-        if isinstance(urls, str):
-            urls = [urls]
-        self._clients = [Client(u) for u in urls]
+    def __init__(self, servers: Mapping[str, str | Dict[str, Any]]) -> None:
+        self._clients: List[Client] = []
+        for name, spec in servers.items():
+            if isinstance(spec, dict):
+                config = {"mcpServers": {name: spec}}
+                client = Client(config)
+            else:
+                client = Client(spec)
+            self._clients.append(client)
         self._tool_clients: Dict[str, Client] = {}
 
     async def _list_tools_async(self) -> List[Dict[str, Any]]:
