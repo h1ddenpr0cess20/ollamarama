@@ -91,7 +91,9 @@ Example:
   ],
   "personality": "an open source AI chatbot named Ollamarama, powered by Ollama.",
   "mcp_servers": {
-    "playwright": "http://localhost:8931/mcp"
+    "playwright": "http://localhost:8931/mcp",
+    "notes": {"command": "python", "args": ["notes_server.py"]},
+    "browser": {"command": "npx -y @modelcontext/browser"}
   }
 }
 ```
@@ -106,7 +108,9 @@ Field reference:
 - `default_model`: Key from `models` to select on startup.
 - `prompt`: Two-element array `[prefix, suffix]` used to build a persona system prompt (prefix + personality + suffix).
 - `personality`: Default personality string used at startup. Use `/stock` to clear or `/persona` to change during a session.
-- `mcp_servers`: Optional map of server names to MCP server URLs. When present, tools are auto-discovered at startup.
+- `mcp_servers`: Optional map of server names to MCP server definitions. Each value may be a URL string or an object with a
+  `command` and optional `args` to launch a server via stdio. If `args` is omitted and the `command` string contains
+  spaces, it is automatically split into the executable and its arguments. When present, tools are auto-discovered at startup.
 
 Note: If no MCP servers are reachable, Ollamarama falls back to a bundled tool schema at `ollamarama/tools/schema.json`. If neither is available, tool calling is disabled automatically.
 
@@ -149,14 +153,16 @@ Ollamarama can call tools in the middle of a conversation. This is useful for ac
 
 - Enable/disable at runtime: `/tools`
 - On startup:
-  1. If `mcp_servers` are configured, Ollamarama connects to each via `fastmcp` and auto-discovers their tool schemas.
+  1. If `mcp_servers` are configured, Ollamarama connects to remote URLs or launches command-based servers via `fastmcp` and
+     auto-discovers their tool schemas.
   2. If discovery fails or no MCP servers are configured, it attempts to load a bundled schema from `ollamarama/tools/schema.json`.
   3. If no schema is available, tool calling is disabled.
 
 Example MCP setup:
-1. Start your MCP server (separately) and note its URL (e.g., `http://localhost:8931/mcp`).
-2. Add it under `mcp_servers` in `config.json`.
-3. Start `ollamarama`. Tools will be discovered automatically.
+1. Add your MCP server under `mcp_servers` in `config.json`. Each entry can be a URL or a `{ "command": ..., "args": [...] }`
+   spec. If the `command` string already includes arguments, `args` may be omitted and will be split automatically.
+2. Start `ollamarama`. Remote servers are connected to and command-based servers are launched automatically. Tools will be
+   discovered without extra steps.
 
 Security note: Tool calls can execute actions exposed by your MCP servers. Only connect to servers you trust and understand.
 
