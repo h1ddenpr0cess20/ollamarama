@@ -10,7 +10,7 @@ import mcp.types
 
 class FastMCPClient:
     def __init__(self, servers: Dict[str, Any]) -> None:
-        self._clients: List[Client] = []
+        self._servers: Dict[str, Any] = {}
         for name, spec in servers.items():
             if isinstance(spec, str):
                 target = spec.strip()
@@ -20,11 +20,12 @@ class FastMCPClient:
                     import shlex
 
                     parts = shlex.split(target)
-                    cmd = parts[0]
-                    args = parts[1:]
-                    self._clients.append(Client({name: {"command": cmd, "args": args}}))
+                    cfg: Dict[str, Any] = {"command": parts[0]}
+                    if len(parts) > 1:
+                        cfg["args"] = parts[1:]
+                    self._servers[name] = cfg
                 else:
-                    self._clients.append(Client(target))
+                    self._servers[name] = target
             elif isinstance(spec, dict):
                 cfg = dict(spec)
                 cmd = cfg.get("command")
@@ -35,16 +36,17 @@ class FastMCPClient:
                     cfg["command"] = parts[0]
                     if len(parts) > 1:
                         cfg["args"] = parts[1:]
-                self._clients.append(Client({name: cfg}))
-        self._tool_clients: Dict[str, Client] = {}
+                self._servers[name] = cfg
+        self._tool_servers: Dict[str, str] = {}
 
     async def _list_tools_async(self) -> List[Dict[str, Any]]:
         schema: List[Dict[str, Any]] = []
-        for client in self._clients:
+        for name, cfg in self._servers.items():
+            client = Client(cfg) if isinstance(cfg, str) else Client({name: cfg})
             async with client:
                 tools = await client.list_tools()
             for tool in tools:
-                self._tool_clients[tool.name] = client
+                self._tool_servers[tool.name] = name
                 schema.append(
                     {
                         "type": "function",
@@ -79,9 +81,11 @@ class FastMCPClient:
         return {"result": "\n".join(texts)}
 
     def call_tool(self, name: str, arguments: Dict[str, Any]) -> str:
-        client = self._tool_clients.get(name)
-        if client is None:
+        server_name = self._tool_servers.get(name)
+        if server_name is None:
             return json.dumps({"error": f"Unknown tool: {name}"}, ensure_ascii=False)
+        cfg = self._servers.get(server_name)
+        client = Client(cfg) if isinstance(cfg, str) else Client({server_name: cfg})
         try:
             data = asyncio.run(self._call_tool_async(client, name, arguments))
         except Exception as e:
