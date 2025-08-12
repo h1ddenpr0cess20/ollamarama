@@ -43,10 +43,10 @@ class App:
         self.tools_enabled: bool = True
         self.mcp_client: FastMCPClient | None = None
         if self.config.mcp_servers:
-            urls = [url.strip() for url in self.config.mcp_servers.values() if url.strip()]
-            if urls:
+            servers = {k: v for k, v in self.config.mcp_servers.items() if v}
+            if servers:
                 try:
-                    self.mcp_client = FastMCPClient(urls)
+                    self.mcp_client = FastMCPClient(servers)
                     self._tools_schema = self.mcp_client.list_tools()
                 except Exception as e:
                     print_error(self.console, f"Failed to load tools from MCP server: {e}")
