@@ -16,9 +16,26 @@ class FastMCPClient:
                 target = spec.strip()
                 if not target:
                     continue
-                self._clients.append(Client(target))
+                if "://" not in target and " " in target:
+                    import shlex
+
+                    parts = shlex.split(target)
+                    cmd = parts[0]
+                    args = parts[1:]
+                    self._clients.append(Client({name: {"command": cmd, "args": args}}))
+                else:
+                    self._clients.append(Client(target))
             elif isinstance(spec, dict):
-                self._clients.append(Client({name: spec}))
+                cfg = dict(spec)
+                cmd = cfg.get("command")
+                if isinstance(cmd, str) and "args" not in cfg and " " in cmd:
+                    import shlex
+
+                    parts = shlex.split(cmd)
+                    cfg["command"] = parts[0]
+                    if len(parts) > 1:
+                        cfg["args"] = parts[1:]
+                self._clients.append(Client({name: cfg}))
         self._tool_clients: Dict[str, Client] = {}
 
     async def _list_tools_async(self) -> List[Dict[str, Any]]:
