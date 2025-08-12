@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Dict, List, Mapping, Sequence
+from typing import Any, Dict, List, Mapping
 
+import shlex
 from fastmcp import Client
 import mcp.types
 
@@ -12,12 +13,22 @@ class FastMCPClient:
     def __init__(self, servers: Mapping[str, str | Dict[str, Any]]) -> None:
         self._clients: List[Client] = []
         for name, spec in servers.items():
+            client: Client | None = None
             if isinstance(spec, dict):
                 config = {"mcpServers": {name: spec}}
                 client = Client(config)
-            else:
-                client = Client(spec)
-            self._clients.append(client)
+            elif isinstance(spec, str):
+                spec = spec.strip()
+                if spec.startswith("http://") or spec.startswith("https://"):
+                    client = Client(spec)
+                else:
+                    parts = shlex.split(spec)
+                    if not parts:
+                        continue
+                    config = {"mcpServers": {name: {"command": parts[0], "args": parts[1:]}}}
+                    client = Client(config)
+            if client is not None:
+                self._clients.append(client)
         self._tool_clients: Dict[str, Client] = {}
 
     async def _list_tools_async(self) -> List[Dict[str, Any]]:

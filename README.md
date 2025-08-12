@@ -110,7 +110,7 @@ Field reference:
 - `default_model`: Key from `models` to select on startup.
 - `prompt`: Two-element array `[prefix, suffix]` used to build a persona system prompt (prefix + personality + suffix).
 - `personality`: Default personality string used at startup. Use `/stock` to clear or `/persona` to change during a session.
-- `mcp_servers`: Optional map of server names to MCP server definitions. Each value may be a URL string or an object with `command`/`args` for stdio servers. Tools are auto-discovered at startup.
+- `mcp_servers`: Optional map of server names to MCP server definitions. Each value may be a URL string, a full command string (e.g. `"npx -y @playwright/mcp"`), or an object with `command`/`args` for stdio servers. Tools are auto-discovered at startup.
 
 Note: If no MCP servers are reachable, Ollamarama falls back to a bundled tool schema at `ollamarama/tools/schema.json`. If neither is available, tool calling is disabled automatically.
 
