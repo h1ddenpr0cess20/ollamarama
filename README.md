@@ -27,8 +27,7 @@ Also available for:
 - Adjust model parameters (temperature, top_p, repeat_penalty) on the fly
 - Switch between different AI models, using friendly keys from config.json
 - Tool calling:
-  - Auto-discovers tools from configured MCP servers (via `fastmcp`)
-  - Falls back to a bundled `tools/schema.json` when no MCP servers are reachable
+  - Auto-discovers tools from configured MCP servers (via `fastmcp`) and merges them with a bundled `tools/schema.json`
   - Toggle at runtime with `/tools`
 - Safe streaming that hides any content inside <think>...</think> blocks
 - Multi-line input support (Esc+Enter)
@@ -155,7 +154,7 @@ Ollamarama can call tools in the middle of a conversation. This is useful for ac
 - On startup:
   1. If `mcp_servers` are configured, Ollamarama connects to remote URLs or launches command-based servers via `fastmcp` and
      auto-discovers their tool schemas.
-  2. If discovery fails or no MCP servers are configured, it attempts to load a bundled schema from `ollamarama/tools/schema.json`.
+  2. The discovered tools are merged with the bundled schema from `ollamarama/tools/schema.json`. When no MCP servers are reachable, only the bundled schema is used.
   3. If no schema is available, tool calling is disabled.
 
 Example MCP setup:

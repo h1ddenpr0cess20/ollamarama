@@ -42,19 +42,29 @@ class App:
         # Tool calling
         self.tools_enabled: bool = True
         self.mcp_client: FastMCPClient | None = None
+        self._mcp_tool_names: set[str] = set()
+        builtin_schema = self._load_tools_schema()
+        mcp_schema: List[Dict[str, Any]] = []
         if self.config.mcp_servers:
             servers = {k: v for k, v in self.config.mcp_servers.items() if v}
             if servers:
                 try:
                     self.mcp_client = FastMCPClient(servers)
-                    self._tools_schema = self.mcp_client.list_tools()
+                    mcp_schema = self.mcp_client.list_tools()
+                    for tool in mcp_schema:
+                        fn = (tool.get("function") or {}).get("name")
+                        if isinstance(fn, str):
+                            self._mcp_tool_names.add(fn)
                 except Exception as e:
                     print_error(self.console, f"Failed to load tools from MCP server: {e}")
-                    self._tools_schema = self._load_tools_schema()
-            else:
-                self._tools_schema = self._load_tools_schema()
-        else:
-            self._tools_schema = self._load_tools_schema()
+            # If servers dict is empty, mcp_schema remains empty
+        # Combine MCP and bundled schema (MCP takes precedence on name clashes)
+        combined: List[Dict[str, Any]] = list(mcp_schema)
+        for tool in builtin_schema:
+            fn = (tool.get("function") or {}).get("name")
+            if isinstance(fn, str) and fn not in self._mcp_tool_names:
+                combined.append(tool)
+        self._tools_schema = combined
         if not self._tools_schema:
             self.tools_enabled = False
 
@@ -104,7 +114,7 @@ class App:
         print_info(self.console, f"Tools {state}")
 
     def _execute_tool(self, name: str, arguments: Dict[str, Any]) -> str:
-        if self.mcp_client is not None:
+        if self.mcp_client is not None and name in self._mcp_tool_names:
             return self.mcp_client.call_tool(name, arguments)
         return execute_tool(name, arguments)
 
