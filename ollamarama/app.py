@@ -51,41 +51,45 @@ class App:
             candidate_servers = {k: v for k, v in self.config.mcp_servers.items() if v}
             successful_servers: dict[str, Any] = {}
             mcp_schema: List[Dict[str, Any]] = []
-            for name, cfg in candidate_servers.items():
-                try:
-                    # Attempt to create a client for a single server
-                    client = FastMCPClient({name: cfg})
-                    tools = client.list_tools()
-                    # If successful, merge into overall schema and keep the server
-                    successful_servers[name] = cfg
-                    mcp_schema.extend(tools)
-                    # Register tool function names
-                    for tool in tools:
-                        fn = (tool.get("function") or {}).get("name")
-                        if isinstance(fn, str):
-                            self._mcp_tool_names.add(fn)
-                except Exception as e:
-                    # Log the failure but continue with other servers
-                    print_error(
-                        self.console,
-                        f"Failed to load tools from MCP server '{name}': {e}",
-                    )
-            # If any servers succeeded, create a client handling all successful ones
-            if successful_servers:
-                try:
-                    self.mcp_client = FastMCPClient(successful_servers)
-                    # Populate the consolidated client's tool->server map by listing tools once
-                    _ = self.mcp_client.list_tools()
-                except Exception as e:
-                    # This should be rare; log and continue without MCP client
-                    print_error(
-                        self.console,
-                        f"Failed to initialize FastMCPClient with successful servers: {e}",
-                    )
-            else:
-                # No servers could be loaded
-                self.mcp_client = None
-            # If servers dict is empty, mcp_schema remains empty
+
+            # Show a spinner while initializing/loading MCP servers and tools
+            spinner = Spinner("dots", text="Loading MCP servers...", style="bold gold3")
+            with Live(spinner, console=self.console, refresh_per_second=24, transient=True) as live:
+                for name, cfg in candidate_servers.items():
+                    try:
+                        # Attempt to create a client for a single server
+                        client = FastMCPClient({name: cfg})
+                        tools = client.list_tools()
+                        # If successful, merge into overall schema and keep the server
+                        successful_servers[name] = cfg
+                        mcp_schema.extend(tools)
+                        # Register tool function names
+                        for tool in tools:
+                            fn = (tool.get("function") or {}).get("name")
+                            if isinstance(fn, str):
+                                self._mcp_tool_names.add(fn)
+                    except Exception as e:
+                        # Log the failure but continue with other servers
+                        # print_error(
+                        #     self.console,
+                        #     f"Failed to load tools from MCP server '{name}': {e}",
+                        # )
+                        pass
+                # If any servers succeeded, create a client handling all successful ones
+                if successful_servers:
+                    try:
+                        self.mcp_client = FastMCPClient(successful_servers)
+                        # Populate the consolidated client's tool->server map by listing tools once
+                        _ = self.mcp_client.list_tools()
+                    except Exception as e:
+                        # This should be rare; log and continue without MCP client
+                        print_error(
+                            self.console,
+                            f"Failed to initialize FastMCPClient with successful servers: {e}",
+                        )
+                else:
+                    # No servers could be loaded
+                    self.mcp_client = None
         # Combine MCP and bundled schema (MCP takes precedence on name clashes)
         combined: List[Dict[str, Any]] = list(mcp_schema)
         for tool in builtin_schema:
@@ -188,71 +192,93 @@ class App:
         Repeats until the assistant returns content without further tool calls.
         Streams the final assistant message for parity with normal replies.
         """
-        try:
-            result = self.client.chat_with_tools(
-                model=self.model,
-                messages=message,
-                options=self.options,
-                tools=self._tools_schema,
-                tool_choice="auto",
-            )
-        except Exception as e:
-            err = f"Failed to get tool-aware response: {e}"
-            print_error(self.console, err)
-            logging.exception(err)
-            return ""
-
-        # Tool loop
-        max_iterations = 8
-        iterations = 0
-        while iterations < max_iterations:
-            msg = result.get("message", {})
-            tool_calls = msg.get("tool_calls") or []
-            if not tool_calls:
-                break
-            # Append assistant tool_calls message to history as-is
-            self.messages.append(msg)
-            for call in tool_calls:
-                func = (call.get("function") or {})
-                name = func.get("name") or ""
-                raw_args = func.get("arguments")
-                try:
-                    # arguments may be stringified JSON or dict
-                    if isinstance(raw_args, str):
-                        import json as _json
-
-                        args = _json.loads(raw_args) if raw_args.strip() else {}
-                    elif isinstance(raw_args, dict):
-                        args = raw_args
-                    else:
-                        args = {}
-                except Exception:
-                    args = {}
-                tool_result = self._execute_tool(name, args)
-                # Echo tool result back
-                tool_msg: Dict[str, Any] = {
-                    "role": "tool",
-                    "content": str(tool_result),
-                }
-                # If an id is present, attach it for threading
-                if call.get("id"):
-                    tool_msg["tool_call_id"] = call["id"]
-                self.messages.append(tool_msg)
-
+        # Show spinner during blocking tool-call phase to avoid gaps before streaming
+        spinner = Spinner("dots", text=(spinner_text or "thinking…"), style=spinner_style)
+        with Live(spinner, console=self.console, refresh_per_second=24, transient=True) as live:
             try:
                 result = self.client.chat_with_tools(
                     model=self.model,
-                    messages=self.messages,
+                    messages=message,
                     options=self.options,
                     tools=self._tools_schema,
                     tool_choice="auto",
                 )
             except Exception as e:
-                err = f"Failed to continue after tool call: {e}"
+                err = f"Failed to get tool-aware response: {e}"
                 print_error(self.console, err)
                 logging.exception(err)
                 return ""
-            iterations += 1
+
+            # Tool loop
+            max_iterations = 8
+            iterations = 0
+            while iterations < max_iterations:
+                msg = result.get("message", {})
+                tool_calls = msg.get("tool_calls") or []
+                if not tool_calls:
+                    break
+                # Append assistant tool_calls message to history as-is
+                self.messages.append(msg)
+                for call in tool_calls:
+                    func = (call.get("function") or {})
+                    name = func.get("name") or ""
+                    raw_args = func.get("arguments")
+                    try:
+                        # arguments may be stringified JSON or dict
+                        if isinstance(raw_args, str):
+                            import json as _json
+
+                            args = _json.loads(raw_args) if raw_args.strip() else {}
+                        elif isinstance(raw_args, dict):
+                            args = raw_args
+                        else:
+                            args = {}
+                    except Exception:
+                        args = {}
+                    # Update spinner to show tool execution details
+                    try:
+                        import json as _json
+                        _preview = _json.dumps(args, ensure_ascii=False)
+                        if len(_preview) > 120:
+                            _preview = _preview[:117] + "..."
+                        spinner.text = f"Executing tool: {name} {_preview}"
+                    except Exception:
+                        spinner.text = f"Executing tool: {name}"
+                    try:
+                        live.update(spinner, refresh=True)
+                    except Exception:
+                        pass
+                    tool_result = self._execute_tool(name, args)
+                    # Indicate tool completion
+                    try:
+                        spinner.text = f"thinking..."
+                        live.update(spinner, refresh=True)
+                    except Exception:
+                        pass
+                    # Echo tool result back
+                    tool_msg: Dict[str, Any] = {
+                        "role": "tool",
+                        "content": str(tool_result),
+                    }
+                    # If an id is present, attach it for threading
+                    if call.get("id"):
+                        tool_msg["tool_call_id"] = call["id"]
+                    self.messages.append(tool_msg)
+
+                try:
+                    result = self.client.chat_with_tools(
+                        model=self.model,
+                        messages=self.messages,
+                        options=self.options,
+                        tools=self._tools_schema,
+                        tool_choice="auto",
+                    )
+                except Exception as e:
+                    err = f"Failed to continue after tool call: {e}"
+                    print_error(self.console, err)
+                    logging.exception(err)
+                    return ""
+                iterations += 1
 
         # No more tool calls: now stream the final assistant content
         streamed = self.respond_stream(
@@ -486,7 +512,7 @@ class App:
         self.model = self.models.get(self.default_model, self.default_model)
         self.options = copy.deepcopy(self.defaults)
 
-        # Use respond_stream's showing_spinner logic for the loading spinner
+        # Use set_prompt to handle spinner/rendering; avoid nested Live spinners
         try:
             self.set_prompt(
                 persona=self.personality,
