@@ -54,7 +54,7 @@ class App:
 
             # Show a spinner while initializing/loading MCP servers and tools
             spinner = Spinner("dots", text="Loading MCP servers...", style="bold gold3")
-            with Live(spinner, console=self.console, refresh_per_second=24, transient=True):
+            with Live(spinner, console=self.console, refresh_per_second=24, transient=True) as live:
                 for name, cfg in candidate_servers.items():
                     try:
                         # Attempt to create a client for a single server
@@ -194,7 +194,7 @@ class App:
         """
         # Show spinner during blocking tool-call phase to avoid gaps before streaming
         spinner = Spinner("dots", text=(spinner_text or "thinking…"), style=spinner_style)
-        with Live(spinner, console=self.console, refresh_per_second=24, transient=True):
+        with Live(spinner, console=self.console, refresh_per_second=24, transient=True) as live:
             try:
                 result = self.client.chat_with_tools(
                     model=self.model,
@@ -235,7 +235,26 @@ class App:
                             args = {}
                     except Exception:
                         args = {}
+                    # Update spinner to show tool execution details
+                    try:
+                        import json as _json
+                        _preview = _json.dumps(args, ensure_ascii=False)
+                        if len(_preview) > 120:
+                            _preview = _preview[:117] + "..."
+                        spinner.text = f"Executing tool: {name} {_preview}"
+                    except Exception:
+                        spinner.text = f"Executing tool: {name}"
+                    try:
+                        live.update(spinner, refresh=True)
+                    except Exception:
+                        pass
                     tool_result = self._execute_tool(name, args)
+                    # Indicate tool completion
+                    try:
+                        spinner.text = f"Completed tool: {name}"
+                        live.update(spinner, refresh=True)
+                    except Exception:
+                        pass
                     # Echo tool result back
                     tool_msg: Dict[str, Any] = {
                         "role": "tool",
