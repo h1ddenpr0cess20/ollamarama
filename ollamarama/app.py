@@ -177,7 +177,12 @@ class App:
                 self.tools_enabled = False
                 return []
 
-    def respond_with_tools(self, message: List[Dict[str, Any]]) -> str:
+    def respond_with_tools(
+        self,
+        message: List[Dict[str, Any]],
+        spinner_text: str | None = None,
+        spinner_style: str = "gold3",
+    ) -> str:
         """Handle tool-calling loop with Ollama's /api/chat and local tool execution.
 
         Repeats until the assistant returns content without further tool calls.
@@ -250,7 +255,11 @@ class App:
             iterations += 1
 
         # No more tool calls: now stream the final assistant content
-        streamed = self.respond_stream(self.messages)
+        streamed = self.respond_stream(
+            self.messages,
+            spinner_text=spinner_text or "thinking…",
+            spinner_style=spinner_style,
+        )
 
         # After a streamed response, trim and lightly clean tool artifacts
         if len(self.messages) > 24:
@@ -293,7 +302,14 @@ class App:
 
         return text
 
-    def set_prompt(self, *, persona: bool | str = False, custom: bool = False) -> None:
+    def set_prompt(
+        self,
+        *,
+        persona: bool | str = False,
+        custom: bool = False,
+        spinner_text: str | None = None,
+        spinner_style: str = "gold3",
+    ) -> None:
         self.messages.clear()
         system = None
 
@@ -317,9 +333,17 @@ class App:
             self.messages.append({"role": "system", "content": system})
             self.messages.append({"role": "user", "content": "introduce yourself"})
             if self.tools_enabled and self._tools_schema:
-                _ = self.respond_with_tools(self.messages)
+                _ = self.respond_with_tools(
+                    self.messages,
+                    spinner_text=spinner_text,
+                    spinner_style=spinner_style,
+                )
             else:
-                _ = self.respond_stream(self.messages)
+                _ = self.respond_stream(
+                    self.messages,
+                    spinner_text=spinner_text or "thinking…",
+                    spinner_style=spinner_style,
+                )
             self.console.print()
 
     def respond(self, message: List[Dict[str, str]]) -> str:
@@ -344,7 +368,13 @@ class App:
                 self.messages.pop(0)
         return visible
 
-    def respond_stream(self, message: List[Dict[str, str]]) -> str:
+    def respond_stream(
+        self,
+        message: List[Dict[str, str]],
+        *,
+        spinner_text: str = "thinking…",
+        spinner_style: str = "gold3",
+    ) -> str:
         """Stream a response and render progressively with Rich Live.
 
         Applies the same think-tag hiding policy as respond(): if the stream
@@ -361,7 +391,7 @@ class App:
         try:
             interrupted = False
             # Use Rich Live to continuously update a Markdown renderable
-            spinner = Spinner("dots", text="thinking…", style="gold3")
+            spinner = Spinner("dots", text=spinner_text, style=spinner_style)
             showing_spinner = True
             with Live(
                 spinner,
@@ -455,9 +485,14 @@ class App:
         logging.info("Bot reset")
         self.model = self.models.get(self.default_model, self.default_model)
         self.options = copy.deepcopy(self.defaults)
-        self.console.print("Please wait while the model loads...", style="bold")
+
+        # Use respond_stream's showing_spinner logic for the loading spinner
         try:
-            self.set_prompt(persona=self.personality)
+            self.set_prompt(
+                persona=self.personality,
+                spinner_text="Loading model...",
+                spinner_style="bold gold3",
+            )
         except Exception as e:
             self.console.print(str(e))
             raise
