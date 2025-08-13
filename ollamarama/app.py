@@ -251,7 +251,7 @@ class App:
                     tool_result = self._execute_tool(name, args)
                     # Indicate tool completion
                     try:
-                        spinner.text = f"Completed tool: {name}"
+                        spinner.text = f"thinking..."
                         live.update(spinner, refresh=True)
                     except Exception:
                         pass
