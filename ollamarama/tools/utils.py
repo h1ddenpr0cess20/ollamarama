@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Any, Dict
+
+import hashlib
 
 
 def get_time(timezone_name: str = "UTC") -> Dict[str, Any]:
@@ -17,3 +19,9 @@ def get_time(timezone_name: str = "UTC") -> Dict[str, Any]:
         return {"datetime": datetime.now(ZoneInfo(tz)).isoformat(), "timezone": tz}
     except Exception:
         return {"error": f"Unsupported timezone '{tz}'. Use 'UTC' or 'local'."}
+
+
+def sha256_hash(text: str) -> Dict[str, str]:
+    """Return the SHA256 hex digest of the provided text."""
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return {"sha256": digest}

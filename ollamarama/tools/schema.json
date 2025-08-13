@@ -25,37 +25,17 @@
   {
     "type": "function",
     "function": {
-      "name": "add_numbers",
-      "description": "Sum a list of numbers and return the result as a string.",
+      "name": "calculate_expression",
+      "description": "Safely evaluate a basic arithmetic expression.",
       "parameters": {
         "type": "object",
         "properties": {
-          "numbers": {
-            "type": "array",
-            "items": { "type": "number" },
-            "description": "Numbers to add together."
+          "expression": {
+            "type": "string",
+            "description": "Arithmetic expression using +, -, *, /, and parentheses."
           }
         },
-        "required": ["numbers"],
-        "additionalProperties": false
-      }
-    }
-  },
-  {
-    "type": "function",
-    "function": {
-      "name": "multiply_numbers",
-      "description": "Multiply a list of numbers and return the result as a string.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "numbers": {
-            "type": "array",
-            "items": { "type": "number" },
-            "description": "Numbers to multiply."
-          }
-        },
-        "required": ["numbers"],
+        "required": ["expression"],
         "additionalProperties": false
       }
     }
@@ -81,8 +61,26 @@
   {
     "type": "function",
     "function": {
-      "name": "word_count",
-      "description": "Count words in the given text and return the integer as a string.",
+      "name": "sha256_hash",
+      "description": "Compute the SHA256 digest of the provided text.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to hash."
+          }
+        },
+        "required": ["text"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "text_stats",
+      "description": "Return counts of words, characters, and sentences in the text.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -92,6 +90,28 @@
           }
         },
         "required": ["text"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "fetch_url",
+      "description": "Fetch text content from an HTTP(S) URL.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to retrieve."
+          },
+          "max_bytes": {
+            "type": "integer",
+            "description": "Maximum number of bytes to return (default 65536)."
+          }
+        },
+        "required": ["url"],
         "additionalProperties": false
       }
     }
