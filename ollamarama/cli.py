@@ -11,26 +11,61 @@ from .client import OllamaClient
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="ollamarama",
-        description="Terminal chatbot for local LLMs via Ollama",
+        description="Terminal chatbot for interacting with local LLMs via Ollama. Supports customization of model, persona, and response parameters to tailor the chat experience.",
     )
 
     persona_group = parser.add_mutually_exclusive_group()
     persona_group.add_argument(
+        "-p",
         "--persona",
         type=str,
         help="Set initial persona/system style (string)",
     )
     persona_group.add_argument(
+        "-s",
         "--stock",
         action="store_true",
         help="Start with stock (no persona) settings",
     )
+    persona_group.add_argument(
+        "-c",
+        "--custom",
+        type=str,
+        help="Set custom persona/system style (string)",
+    )
 
-    parser.add_argument("--model", type=str, help="Model key or full model name")
-    parser.add_argument("--api-base", type=str, help="Override Ollama API base URL")
-    parser.add_argument("--temperature", type=float, help="Initial temperature (0-1)")
-    parser.add_argument("--top-p", dest="top_p", type=float, help="Initial top_p (0-1)")
-    parser.add_argument("--repeat-penalty", dest="repeat_penalty", type=float, help="Repeat penalty (0-2)")
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        help="Model key or full model name",
+    )
+    parser.add_argument(
+        "-b",
+        "--api-base",
+        type=str,
+        help="Override Ollama API base URL",
+    )
+    parser.add_argument(
+        "-t",
+        "--temperature",
+        type=float,
+        help="Initial temperature (0-1)",
+    )
+    parser.add_argument(
+        "-tp",
+        "--top-p",
+        dest="top_p",
+        type=float,
+        help="Initial top_p (0-1)",
+    )
+    parser.add_argument(
+        "-r",
+        "--repeat-penalty",
+        dest="repeat_penalty",
+        type=float,
+        help="Repeat penalty (0-2)",
+    )
 
     args = parser.parse_args()
 
@@ -76,5 +111,7 @@ def main() -> None:
         app.personality = ""
     elif args.persona:
         app.personality = args.persona
+    elif args.custom:
+        app.personality = args.custom
 
     app.start()

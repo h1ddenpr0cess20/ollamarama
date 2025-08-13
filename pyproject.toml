@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ollamarama"
-version = "1.3.1"
+version = "1.3.2"
 
 description = "Terminal-based AI chatbot for local LLMs via Ollama"
 readme = "README.md"
