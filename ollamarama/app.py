@@ -392,18 +392,12 @@ class App:
         if system:
             self.messages.append({"role": "system", "content": system})
             self.messages.append({"role": "user", "content": "introduce yourself"})
-            if self.tools_enabled and self._tools_schema:
-                _ = self.respond_with_tools(
-                    self.messages,
-                    spinner_text=spinner_text,
-                    spinner_style=spinner_style,
-                )
-            else:
-                _ = self.respond_stream(
-                    self.messages,
-                    spinner_text=spinner_text or "thinking…",
-                    spinner_style=spinner_style,
-                )
+
+            _ = self.respond_stream(
+                self.messages,
+                spinner_text=spinner_text or "thinking…",
+                spinner_style=spinner_style,
+            )
             self.console.print()
 
     def respond(self, message: List[Dict[str, str]]) -> str:
