@@ -29,11 +29,26 @@ class App:
         self.messages: List[Dict[str, str]] = []
 
         self.config: AppConfig = load_config("config.json")
-        self.models: Dict[str, str] = self.config.models
-        self.default_model: str = self.config.default_model
-        self.model: str = self.models.get(self.default_model, self.default_model)
-
         self.client = OllamaClient(self.config.api_base)
+        
+        # Fetch models dynamically if not provided in config
+        if self.config.models is None:
+            self.models: Dict[str, str] = self.client.get_models()
+            # If no models fetched and no default_model set, try to use first available
+            if not self.models and not self.config.default_model:
+                print_error(self.console, "No models available from Ollama API")
+                self.models = {}
+                self.default_model = ""
+                self.model = ""
+            else:
+                # Use configured default_model or first available model
+                self.default_model: str = self.config.default_model or next(iter(self.models), "")
+                self.model: str = self.models.get(self.default_model, self.default_model)
+        else:
+            # Use models from config (legacy behavior)
+            self.models: Dict[str, str] = self.config.models
+            self.default_model: str = self.config.default_model
+            self.model: str = self.models.get(self.default_model, self.default_model)
 
         self.options: Dict[str, float] = self.config.options.to_dict()
         # Keep a safe copy for resets

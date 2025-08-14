@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Iterator, Optional
 
 class OllamaClient:
     def __init__(self, api_base: str) -> None:
-        self.api_url = api_base.rstrip("/") + "/api/chat"
+        self.api_base = api_base.rstrip("/")
+        self.api_url = self.api_base + "/api/chat"
 
     def chat(
         self,
@@ -108,3 +109,26 @@ class OllamaClient:
         response = requests.post(self.api_url, json=payload, timeout=timeout)
         response.raise_for_status()
         return response.json()
+
+    def get_models(self, timeout: int = 30) -> Dict[str, str]:
+        """Fetch available models from /api/tags endpoint.
+        
+        Returns a dictionary mapping model names to themselves for compatibility
+        with the existing models configuration format.
+        """
+        tags_url = self.api_base + "/api/tags"
+        try:
+            response = requests.get(tags_url, timeout=timeout)
+            response.raise_for_status()
+            data = response.json()
+            
+            models = {}
+            for model_info in data.get("models", []):
+                name = model_info.get("name", "")
+                if name:
+                    models[name] = name
+            
+            return models
+        except Exception as e:
+            # If fetching fails, return empty dict - caller should handle gracefully
+            return {}
