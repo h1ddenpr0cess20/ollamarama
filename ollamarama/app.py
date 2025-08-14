@@ -277,7 +277,7 @@ class App:
                     tool_result = self._execute_tool(name, args)
                     # Indicate tool completion
                     try:
-                        spinner.text = f"thinking..."
+                        spinner.text = f"thinking…"
                         live.update(spinner, refresh=True)
                     except Exception:
                         pass
@@ -303,6 +303,12 @@ class App:
                     err = f"Failed to continue after tool call: {e}"
                     print_error(self.console, err)
                     logging.exception(err)
+                    # Purge any tool artifacts accumulated so far to keep history clean
+                    self.messages[:] = [
+                        m
+                        for m in self.messages
+                        if not (m.get("role") == "tool" or (isinstance(m, dict) and m.get("tool_calls")))
+                    ]
                     return ""
                 iterations += 1
 
@@ -313,17 +319,19 @@ class App:
             spinner_style=spinner_style,
         )
 
-        # After a streamed response, trim and lightly clean tool artifacts
+        # Purge all tool call artifacts from persistent history so only system/user/assistant remain
+        self.messages[:] = [
+            m
+            for m in self.messages
+            if not (m.get("role") == "tool" or (isinstance(m, dict) and m.get("tool_calls")))
+        ]
+
+        # Apply sliding window after purge (preserve leading system message when present)
         if len(self.messages) > 24:
-            if self.messages[0].get("role") == "system":
+            if self.messages and self.messages[0].get("role") == "system":
                 self.messages.pop(1)
             else:
                 self.messages.pop(0)
-            self.messages[:] = [
-                m
-                for m in self.messages
-                if not (m.get("role") == "tool" or (isinstance(m, dict) and m.get("tool_calls")))
-            ]
 
         return streamed
 
