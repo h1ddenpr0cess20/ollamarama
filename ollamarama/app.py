@@ -149,10 +149,21 @@ class App:
 
         self.custom_session = create_session(key_bindings=kb, multiline=True)
 
+        # Create shortened model names for autocomplete
+        shortened_model_names = [self._shorten_model_name(name) for name in self.models.keys()]
         self.model_session = create_session(
             key_bindings=kb,
-            words=self.models.keys(),
+            words=shortened_model_names,
         )
+
+    def _shorten_model_name(self, name: str) -> str:
+        """Strip hf.co prefix from model name."""
+        if name.startswith("hf.co/"):
+            return name.split("/")[-1]
+        # Only remove :latest suffix, not individual characters
+        if name.endswith(":latest"):
+            return name[:-7]  # Remove last 7 characters (":latest")
+        return name
 
     # ---- Tool calling helpers ----
     def toggle_tools(self) -> None:
@@ -546,11 +557,20 @@ class App:
             return
 
         self.console.print(f"[bold green]Current model[/]: [bold]{self.model}[/]")
+        # Create mapping of shortened names to full names
+        short_to_full = {self._shorten_model_name(name): name for name in self.models.keys()}
+        short_names = list(short_to_full.keys())
         self.console.print(
-            f"[bold green]Available models[/]: {', '.join(sorted(list(self.models)))}"
+            f"[bold green]Available models[/]: {', '.join(sorted(short_names))}"
         )
         model = self.model_session.prompt("Enter model name: ")
-        if model in self.models:
+        # Check if the entered model is a shortened name and map it to full name
+        if model in short_to_full:
+            full_model_name = short_to_full[model]
+            self.model = self.models[full_model_name]
+            print_info(self.console, f"Model set to {self.model}")
+            logging.info(f"Model changed to {self.model}")
+        elif model in self.models:
             self.model = self.models[model]
             print_info(self.console, f"Model set to {self.model}")
             logging.info(f"Model changed to {self.model}")
