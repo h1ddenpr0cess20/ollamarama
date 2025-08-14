@@ -92,19 +92,26 @@ def main() -> None:
             app.default_model = args.model
             app.model = app.models[args.model]
         else:
-            # Try matching by value
-            values = app.models.values()
-            if args.model in values:
-                # find its first key
-                for k, v in app.models.items():
-                    if v == args.model:
-                        app.default_model = k
-                        break
-                app.model = args.model
+            # Try matching by shortened name (removing :latest suffix)
+            short_to_full = {app._shorten_model_name(name): name for name in app.models.keys()}
+            if args.model in short_to_full:
+                full_model_name = short_to_full[args.model]
+                app.default_model = full_model_name
+                app.model = app.models[full_model_name]
             else:
-                app.console.print(
-                    f"[red]Unknown model[/]: {args.model}. Available: {', '.join(sorted(app.models))}"
-                )
+                # Try matching by value
+                values = app.models.values()
+                if args.model in values:
+                    # find its first key
+                    for k, v in app.models.items():
+                        if v == args.model:
+                            app.default_model = k
+                            break
+                    app.model = args.model
+                else:
+                    app.console.print(
+                        f"[red]Unknown model[/]: {args.model}. Available: {', '.join(sorted(app.models))}"
+                    )
 
     # Persona/stock
     if args.stock:
@@ -114,4 +121,5 @@ def main() -> None:
     elif args.custom:
         app.personality = args.custom
 
+    
     app.start()

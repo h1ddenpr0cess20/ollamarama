@@ -23,7 +23,7 @@ class ModelOptions:
 @dataclass
 class AppConfig:
     api_base: str
-    models: Dict[str, str]
+    models: Dict[str, str] | None
     default_model: str
     prompt: List[str]
     personality: str
@@ -52,8 +52,8 @@ def load_config(path: str | Path = "config.json") -> AppConfig:
         raw = json.load(f)
 
     api_base: str = raw.get("api_base", "http://localhost:11434")
-    models: Dict[str, str] = raw.get("models", {})
-    default_model: str = raw.get("default_model", next(iter(models), ""))
+    models: Dict[str, str] | None = raw.get("models")
+    default_model: str = raw.get("default_model", next(iter(models), "") if models else "")
     prompt: List[str] = raw.get(
         "prompt",
         [
