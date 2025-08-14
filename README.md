@@ -214,4 +214,4 @@ Tip: Use Esc+Enter to input multiple lines of text.
 
 ## License
 
-Licensed under the terms of the [MIT License](LICENSE).
+Licensed under the terms of the [AGPL 3.0 License](LICENSE).
